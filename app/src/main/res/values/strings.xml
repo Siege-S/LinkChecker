@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">SMS Link Checker</string>
+    <string name="btnStartService">Start Service</string>
 </resources>
