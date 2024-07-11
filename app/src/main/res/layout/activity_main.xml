@@ -15,22 +15,41 @@
         android:textSize="20sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.497"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.299" />
+        app:layout_constraintVertical_bias="0.126" />
 
     <Button
         android:id="@+id/btnStartService"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:background="@color/green"
+        android:layout_width="160dp"
+        android:layout_height="50dp"
+        android:layout_marginStart="5dp"
+        android:layout_marginEnd="5dp"
+        android:background="#091F98"
+        android:fontFamily="sans-serif"
         android:onClick="btnStartServiceOnClick"
         android:text="@string/btnStartService"
-        android:textSize="16sp"
+        android:textColor="#FFFFFF"
+        android:textSize="14sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.498"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.238"
         tools:text="@string/btnStartService" />
+
+    <ListView
+        android:id="@+id/listviewRecent"
+        android:layout_width="379dp"
+        android:layout_height="371dp"
+        android:background="#FCFCFC"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.52"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/btnStartService"
+        app:layout_constraintVertical_bias="0.507" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -12,7 +12,9 @@ import android.os.Bundle;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ListView;
 import android.widget.Toast;
 
 import android.Manifest;
@@ -24,9 +26,16 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import java.util.ArrayList;
+
+
 public class MainActivity extends AppCompatActivity {
+    public ListView listviewRecent;
     private static final int REQUEST_NOTIFICATION_PERMISSION = 1001;
     private Button buttonStartService;
+    private ArrayAdapter<String> adapter;
+    private ArrayList<String> urlList;
+    private static MainActivity instance;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -60,6 +69,24 @@ public class MainActivity extends AppCompatActivity {
                 btnStartServiceOnClick(v);
             }
         });
+
+//        listviewRecent = findViewById(R.id.listviewRecent);
+//        ArrayAdapter<String> arrayadapter = new ArrayAdapter<String>(this, R.layout.listview_recent, R.id.txtrecent, mylist);
+//        listviewRecent.setAdapter(arrayadapter);
+        instance = this; // Static reference
+        ListView listviewRecent = findViewById(R.id.listviewRecent);
+        urlList = new ArrayList<>();
+        adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, urlList);
+        listviewRecent.setAdapter(adapter);
+
+    }
+    //Add URL Method in listviewrecent
+    public void addUrl(String url) {
+        urlList.add(url);
+        adapter.notifyDataSetChanged();
+    }
+    public static MainActivity getInstance() {
+        return instance;
     }
     //Start Service Method
     public void btnStartServiceOnClick(View view) {
