@@ -5,6 +5,8 @@ import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Build;
 import android.telephony.SmsMessage;
 import android.os.Bundle;
@@ -13,29 +15,22 @@ import android.widget.Toast;
 
 // Regex
 import androidx.core.app.NotificationCompat;
+
+import java.io.ByteArrayOutputStream;
+import java.io.UnsupportedEncodingException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 // screenshotmachine API
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLConnection;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
 
 // antoher
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.net.URLConnection;
+
 
 public class SmsListener extends BroadcastReceiver {
     private static final String CHANNEL_ID = "1001";
@@ -64,64 +59,94 @@ public class SmsListener extends BroadcastReceiver {
                             Log.v("URL", url);
                             createNotification(context, "URL Detected in SMS message", url);
 
-                            // Call ScreenshotMachine API
-                            String customerKey = "990acf";
-                            String secretPhrase = ""; // leave secret phrase empty if not needed
+                            //Method Call API return API URL
+                            String apiUrl = SnapshotmachineAPI(url);
 
-                            ScreenshoMachine sm = new ScreenshoMachine(customerKey, secretPhrase);
-                            Map<String, String> options = new HashMap<>();
-                            options.put("url", url);
-                            options.put("dimension", "1366x768");
-                            options.put("device", "desktop");
-                            options.put("format", "png");
-                            options.put("cacheLimit", "0");
-                            options.put("delay", "200");
-                            options.put("zoom", "100");
+                            String finalMsg_from = msg_from;
+                            new Thread(() -> {
+                                try {
+                                    Bitmap bitmap;
+                                    InputStream in = new URL(apiUrl).openStream();
+                                    bitmap = BitmapFactory.decodeStream(in);
+                                    byte[] image = getBitmapAsByteArray(bitmap);
 
-                            String apiUrl = sm.generateScreenshotApiUrl(options);
-                            Log.v("Screenshot API URL", apiUrl);
-                            downloadScreenshot(apiUrl, context);
+                                    // insert to database in sqlite
+                                    DBHelper dbHelper = new DBHelper(context);
+                                    dbHelper.insertData(url, finalMsg_from, msgBody, apiUrl, image);
 
-                            // Update ListView in MainActivity
-                            String recent = "Sender: " + msg_from + ", Body: " + msgBody + ", URL: " + url;
-                            MainActivity mainActivity = MainActivity.getInstance();
-                            if (mainActivity != null) {
-                                mainActivity.addUrl(recent);
-                            }
+                                    // Update ListView in MainActivity (BUGGY)
+//                                    String recent = "Sender: " + finalMsg_from + ", Body: " + msgBody + ", URL: " + url;
+//                                    MainActivity mainActivity = MainActivity.getInstance();
+//                                    if (mainActivity != null) {
+//                                        mainActivity.addUrl(recent);
+//                                    }
+
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                    Log.e("Screenshot", "Error downloading screenshot: " + e.getMessage());
+                                }
+                            }).start();
                         }
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
+
                 }
             }
         }
     }
+    public String SnapshotmachineAPI(String url) throws UnsupportedEncodingException, NoSuchAlgorithmException {
+        // Call ScreenshotMachine API
+        String customerKey = "990acf";
+        String secretPhrase = ""; // leave secret phrase empty if not needed
 
-    private void downloadScreenshot(String apiUrl, Context context) {
-        new Thread(() -> {
-            try {
-                URLConnection connection = new URL(apiUrl).openConnection();
-                connection.addRequestProperty("User-Agent", "Mozilla/4.0");
-                InputStream inputStream = connection.getInputStream();
+        ScreenshoMachine sm = new ScreenshoMachine(customerKey, secretPhrase);
+        Map<String, String> options = new HashMap<>();
+        options.put("url", url);
+        options.put("dimension", "1366x768");
+        options.put("device", "desktop");
+        options.put("format", "png");
+        options.put("cacheLimit", "0");
+        options.put("delay", "200");
+        options.put("zoom", "100");
 
-                File screenshotFile = new File(context.getExternalFilesDir(null), "screenshot.png");
-                FileOutputStream outputStream = new FileOutputStream(screenshotFile);
+        String apiUrl = sm.generateScreenshotApiUrl(options);
+        Log.v("Screenshot API URL", apiUrl);
 
-                byte[] buffer = new byte[1024];
-                int bytesRead;
-                while ((bytesRead = inputStream.read(buffer)) != -1) {
-                    outputStream.write(buffer, 0, bytesRead);
-                }
-
-                inputStream.close();
-                outputStream.close();
-                Log.v("test", "Screenshot saved: " + screenshotFile.getAbsolutePath());
-            } catch (IOException e) {
-                e.printStackTrace();
-                Log.e("test", "Error downloading screenshot: " + e.getMessage());
-            }
-        }).start();
+        return apiUrl;
     }
+
+    private byte[] getBitmapAsByteArray(Bitmap bitmap) {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.PNG, 0, outputStream);
+        return outputStream.toByteArray();
+    }
+
+//    private void downloadScreenshot(String apiUrl, Context context) {
+//        new Thread(() -> {
+//            try {
+//                URLConnection connection = new URL(apiUrl).openConnection();
+//                connection.addRequestProperty("User-Agent", "Mozilla/4.0");
+//                InputStream inputStream = connection.getInputStream();
+//
+//                File screenshotFile = new File(context.getExternalFilesDir(null), "screenshot.png");
+//                FileOutputStream outputStream = new FileOutputStream(screenshotFile);
+//
+//                byte[] buffer = new byte[1024];
+//                int bytesRead;
+//                while ((bytesRead = inputStream.read(buffer)) != -1) {
+//                    outputStream.write(buffer, 0, bytesRead);
+//                }
+//
+//                inputStream.close();
+//                outputStream.close();
+//                Log.v("test", "Screenshot saved: " + screenshotFile.getAbsolutePath());
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//                Log.e("test", "Error downloading screenshot: " + e.getMessage());
+//            }
+//        }).start();
+//    }
 
 
     private void createNotification(Context context, String title, String message) {
