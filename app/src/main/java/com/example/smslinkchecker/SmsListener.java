@@ -59,7 +59,7 @@ public class SmsListener extends BroadcastReceiver {
                             Log.v("URL", url);
                             createNotification(context, "URL Detected in SMS message", url);
 
-                            //Method Call API return API URL
+                            // Method Call API return API URL
                             String apiUrl = SnapshotmachineAPI(url);
 
                             String finalMsg_from = msg_from;
