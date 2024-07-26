@@ -72,7 +72,7 @@ public class SmsListener extends BroadcastReceiver {
 
                                     // insert to database in sqlite
                                     DBHelper dbHelper = new DBHelper(context);
-                                    dbHelper.insertData(url, finalMsg_from, msgBody, apiUrl, image);
+                                    dbHelper.insertData(url, msgBody, finalMsg_from, apiUrl, image);
 
                                     // Update ListView in MainActivity (BUGGY)
 //                                    String recent = "Sender: " + finalMsg_from + ", Body: " + msgBody + ", URL: " + url;

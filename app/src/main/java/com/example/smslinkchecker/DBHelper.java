@@ -16,13 +16,13 @@ public class DBHelper extends SQLiteOpenHelper {
     }
     @Override
     public void onCreate(SQLiteDatabase db) {
-        String sql = "CREATE TABLE urlmessagestbl (id INTEGER PRIMARY KEY AUTOINCREMENT, url TEXT, message TEXT, contactnumber TEXT, apiurl TEXT, screenshot BLOB)";
+        String sql = "CREATE TABLE urlmessagestbl (id INTEGER PRIMARY KEY AUTOINCREMENT, url TEXT, contactnumber TEXT, message TEXT, apiurl TEXT, screenshot BLOB)";
         db.execSQL(sql);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        db.execSQL("DROP TABLE IF EXISTS urlmessagestbl");
+        db.execSQL("DROP TABLE if exists urlmessagestbl");
         onCreate(db);
     }
 
@@ -32,8 +32,8 @@ public class DBHelper extends SQLiteOpenHelper {
             db = this.getWritableDatabase();
             ContentValues contentValues = new ContentValues();
             contentValues.put("url", url);
-            contentValues.put("message", messageBody);
             contentValues.put("contactnumber", sender);
+            contentValues.put("message", messageBody);
             contentValues.put("apiurl", apiUrl);
             contentValues.put("screenshot", screenShot);
 

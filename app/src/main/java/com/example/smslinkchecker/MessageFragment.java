@@ -34,6 +34,7 @@ public class MessageFragment extends Fragment {
 
     RecyclerView recyclerView;
     ArrayList<String> ID, Sender, URL;
+    ArrayList<byte[]> imageURL;
     DBHelper DB;
     MyAdapter adapter;
 
@@ -70,6 +71,7 @@ public class MessageFragment extends Fragment {
         ID = new ArrayList<>();
         Sender = new ArrayList<>();
         URL = new ArrayList<>();
+        imageURL = new ArrayList<>();
     }
 
     @Override
@@ -84,7 +86,7 @@ public class MessageFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         recyclerView = view.findViewById(R.id.RV_Messages);
-        adapter = new MyAdapter(getContext(), ID, Sender, URL);
+        adapter = new MyAdapter(getContext(), ID, Sender, URL, imageURL);
         recyclerView.setAdapter(adapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         displayData();
@@ -99,6 +101,7 @@ public class MessageFragment extends Fragment {
                 ID.add(cursor.getString(0));
                 Sender.add(cursor.getString(2));
                 URL.add(cursor.getString(1));
+                imageURL.add(cursor.getBlob(5));
             }
         }
         adapter.notifyDataSetChanged();
