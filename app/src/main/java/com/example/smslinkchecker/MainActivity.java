@@ -1,5 +1,6 @@
 package com.example.smslinkchecker;
 
+import android.annotation.SuppressLint;
 import android.app.ActivityManager;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -12,7 +13,9 @@ import android.os.Bundle;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ListView;
 import android.widget.Toast;
 
 import android.Manifest;
@@ -23,20 +26,52 @@ import androidx.core.app.NotificationManagerCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
+
+import com.example.smslinkchecker.databinding.ActivityMainBinding;
+
+import java.util.ArrayList;
+
 
 public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_NOTIFICATION_PERMISSION = 1001;
     private Button buttonStartService;
+
+     ActivityMainBinding binding;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
-        setContentView(R.layout.activity_main);
+        binding = ActivityMainBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
+        replaceFragment(new HomeFragment());
+        binding.bottomNavigationView.setOnItemSelectedListener(item -> {
+            int itemId = item.getItemId();
+            if (itemId == R.id.home) {// Handle home action
+                replaceFragment(new HomeFragment());
+            }
+            else if (itemId == R.id.messages) {// Handle messages action
+                replaceFragment(new MessageFragment());
+            }
+            else if (itemId == R.id.history) {// Handle history action
+                replaceFragment(new HistoryFragment());
+            }
+            else {
+                return false;
+            }
+            return true;
+        });
+
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+
+
 
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && checkSelfPermission(Manifest.permission.RECEIVE_SMS)
                 != PackageManager.PERMISSION_GRANTED) {
@@ -45,22 +80,31 @@ public class MainActivity extends AppCompatActivity {
 
         checkNotificationPermission();
 
-        buttonStartService = findViewById(R.id.btnStartService);
-        Intent serviceIntent = new Intent(this, MyForegroundService.class);
-        if(!foregroundServiceRunning()) {
-            buttonStartService.setText("Start Service");
-        } else {
-            buttonStartService.setText("Stop Service");
-        }
-        // Button to start the service
+//        buttonStartService = findViewById(R.id.btnStartService);
+//        Intent serviceIntent = new Intent(this, MyForegroundService.class);
+//        if(!foregroundServiceRunning()) {
+//            buttonStartService.setText("Start Service");
+//        } else {
+//            buttonStartService.setText("Stop Service");
+//        }
+//        // Button to start the service
+//
+//        buttonStartService.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                btnStartServiceOnClick(v);
+//            }
+//        });
 
-        buttonStartService.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                btnStartServiceOnClick(v);
-            }
-        });
+    } // onCreate
+
+    private void replaceFragment(Fragment fragment){
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+        fragmentTransaction.replace(R.id.frame_layout, fragment);
+        fragmentTransaction.commit();
     }
+
     //Start Service Method
     public void btnStartServiceOnClick(View view) {
         Log.v("btnService", "Button Service is CLicked.");
