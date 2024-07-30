@@ -35,7 +35,7 @@ import java.util.Map;
 public class SmsListener extends BroadcastReceiver {
     private static final String CHANNEL_ID = "1001";
     private static final int NOTIFICATION_ID = 123;
-    public static String url = "";
+    public String url = "";
     @Override
     public void onReceive(Context context, Intent intent) {
         if (intent.getAction().equals("android.provider.Telephony.SMS_RECEIVED")) {
@@ -73,13 +73,6 @@ public class SmsListener extends BroadcastReceiver {
                                     // insert to database in sqlite
                                     DBHelper dbHelper = new DBHelper(context);
                                     dbHelper.insertData(url, msgBody, finalMsg_from, apiUrl, image);
-
-                                    // Update ListView in MainActivity (BUGGY)
-//                                    String recent = "Sender: " + finalMsg_from + ", Body: " + msgBody + ", URL: " + url;
-//                                    MainActivity mainActivity = MainActivity.getInstance();
-//                                    if (mainActivity != null) {
-//                                        mainActivity.addUrl(recent);
-//                                    }
 
                                 } catch (IOException e) {
                                     e.printStackTrace();
