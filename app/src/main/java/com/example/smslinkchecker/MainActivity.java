@@ -106,17 +106,17 @@ public class MainActivity extends AppCompatActivity {
     }
 
     //Start Service Method
-    public void btnStartServiceOnClick(View view) {
-        Log.v("btnService", "Button Service is CLicked.");
-        Intent serviceIntent = new Intent(this, MyForegroundService.class);
-        if(!foregroundServiceRunning()) {
-            buttonStartService.setText("Stop Service");
-            startForegroundService(serviceIntent);
-        } else {
-            buttonStartService.setText("Start Service");
-            stopService(serviceIntent);
-        }
-    }
+//    public void btnStartServiceOnClick(View view) {
+//        Log.v("btnService", "Button Service is CLicked.");
+//        Intent serviceIntent = new Intent(this, MyForegroundService.class);
+//        if(!foregroundServiceRunning()) {
+//            buttonStartService.setText("Stop Service");
+//            startForegroundService(serviceIntent);
+//        } else {
+//            buttonStartService.setText("Start Service");
+//            stopService(serviceIntent);
+//        }
+//    }
 
 
 
