@@ -1,11 +1,14 @@
 package com.example.smslinkchecker;
 
+import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -21,7 +24,24 @@ import java.util.ArrayList;
  * Use the {@link MessageFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class MessageFragment extends Fragment {
+public class MessageFragment extends Fragment implements RecyclerViewInterface {
+    @Override
+    public void onItemClick(int position) {
+        FragmentManager fragmentManager = getActivity().getSupportFragmentManager();
+        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+
+        // Assuming imageURL.get(position) returns a URL or a Bitmap
+        String sender = Sender.get(position);
+        String url = URL.get(position);
+        byte[] imageBytes = imageURL.get(position);  // This is a byte array
+
+        DetailMessageFragment fragment = DetailMessageFragment.newInstance(sender, url, imageBytes);
+        fragmentTransaction.replace(R.id.frame_layout, fragment);
+        fragmentTransaction.addToBackStack(null);
+        fragmentTransaction.commit();
+    }
+
+
 
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -86,7 +106,7 @@ public class MessageFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         recyclerView = view.findViewById(R.id.RV_Messages);
-        adapter = new MyAdapter(getContext(), ID, Sender, URL, imageURL);
+        adapter = new MyAdapter(getContext(), ID, Sender, URL, imageURL, this);
         recyclerView.setAdapter(adapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         displayData();

@@ -20,9 +20,9 @@ public class MyForegroundService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         // Perform your foreground service logic here
-        smsListener = new SmsListener();
-        IntentFilter intentFilter = new IntentFilter(Telephony.Sms.Intents.SMS_RECEIVED_ACTION);
-        registerReceiver(smsListener, intentFilter);
+//        smsListener = new SmsListener();
+//        IntentFilter intentFilter = new IntentFilter(Telephony.Sms.Intents.SMS_RECEIVED_ACTION);
+//        registerReceiver(smsListener, intentFilter);
 
         isRunning = true;
         new Thread(

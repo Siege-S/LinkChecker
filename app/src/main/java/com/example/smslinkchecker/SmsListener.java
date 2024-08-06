@@ -16,6 +16,9 @@ import android.widget.Toast;
 // Regex
 import androidx.core.app.NotificationCompat;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.regex.Matcher;
@@ -30,12 +33,27 @@ import java.util.HashMap;
 import java.util.Map;
 
 // antoher
+import java.io.IOException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class SmsListener extends BroadcastReceiver {
     private static final String CHANNEL_ID = "1001";
     private static final int NOTIFICATION_ID = 123;
-    public static String url = "";
+    public String url = "";
+
+    private static final String API_KEY = "d2a66c9f38303515894f1721ed3aaf695f9ec0eb6ab81c000ef3b4aa228bad94";
+    private ExecutorService executorService;
+
+    private static final int POLLING_INTERVAL_MS = 10000; // 10 seconds
     @Override
     public void onReceive(Context context, Intent intent) {
         if (intent.getAction().equals("android.provider.Telephony.SMS_RECEIVED")) {
@@ -59,6 +77,18 @@ public class SmsListener extends BroadcastReceiver {
                             Log.v("URL", url);
                             createNotification(context, "URL Detected in SMS message", url);
 
+                            // Scan Detected URL using VirusTotal API
+                            executorService = Executors.newSingleThreadExecutor();
+
+                            executorService.execute(() -> {
+                                try {
+                                    String analysisId = scanURL(url);
+                                    getAnalysis(analysisId);
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                            });
+
                             // Method Call API return API URL
                             String apiUrl = SnapshotmachineAPI(url);
 
@@ -73,13 +103,6 @@ public class SmsListener extends BroadcastReceiver {
                                     // insert to database in sqlite
                                     DBHelper dbHelper = new DBHelper(context);
                                     dbHelper.insertData(url, msgBody, finalMsg_from, apiUrl, image);
-
-                                    // Update ListView in MainActivity (BUGGY)
-//                                    String recent = "Sender: " + finalMsg_from + ", Body: " + msgBody + ", URL: " + url;
-//                                    MainActivity mainActivity = MainActivity.getInstance();
-//                                    if (mainActivity != null) {
-//                                        mainActivity.addUrl(recent);
-//                                    }
 
                                 } catch (IOException e) {
                                     e.printStackTrace();
@@ -167,6 +190,80 @@ public class SmsListener extends BroadcastReceiver {
 
         // Show the notification
         notificationManager.notify(NOTIFICATION_ID, builder.build());
+    }
+
+    private String scanURL(String url) throws IOException {
+        OkHttpClient client = new OkHttpClient();
+
+        MediaType mediaType = MediaType.parse("application/x-www-form-urlencoded");
+        RequestBody body = RequestBody.create(mediaType, "url=" + url);
+        Request request = new Request.Builder()
+                .url("https://www.virustotal.com/api/v3/urls")
+                .post(body)
+                .addHeader("accept", "application/json")
+                .addHeader("x-apikey", API_KEY)
+                .addHeader("content-type", "application/x-www-form-urlencoded")
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+            if (!response.isSuccessful()) {
+                throw new IOException("Unexpected code " + response);
+            }
+
+            // Handle the response here
+            String responseBody = response.body().string();
+            System.out.println("Response received: " + responseBody);
+
+            // Assuming the response is JSON, you can parse it to extract the analysis ID
+            JSONObject jsonResponse = new JSONObject(responseBody);
+            return jsonResponse.getJSONObject("data").getString("id");
+
+        } catch (IOException | JSONException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private void getAnalysis(String analysisId) throws IOException {
+        if (analysisId == null || analysisId.isEmpty()) {
+            Log.e("SmsListener", "Invalid analysis ID");
+            return;
+        }
+
+        OkHttpClient client = new OkHttpClient();
+        Request request = new Request.Builder()
+                .url("https://www.virustotal.com/api/v3/analyses/" + analysisId)
+                .get()
+                .addHeader("accept", "application/json")
+                .addHeader("x-apikey", API_KEY)
+                .build();
+
+        while (true) {
+            try (Response response = client.newCall(request).execute()) {
+                if (!response.isSuccessful()) {
+                    throw new IOException("Unexpected code " + response);
+                }
+
+                String responseBody = response.body().string();
+                Log.d("SmsListener", "getAnalysis Response: " + responseBody);
+
+                JSONObject jsonResponse = new JSONObject(responseBody);
+                JSONObject attributes = jsonResponse.getJSONObject("data").getJSONObject("attributes");
+
+                if (!attributes.getString("status").equals("queued")) {
+                    Log.d("SmsListener", "Analysis Results: " + jsonResponse.toString(2));
+                    break;
+                } else {
+                    Log.d("SmsListener", "Analysis still queued. Checking again in 10 seconds.");
+                    Thread.sleep(POLLING_INTERVAL_MS);
+                }
+
+            } catch (IOException | JSONException | InterruptedException e) {
+                Log.e("SmsListener", "Error in getAnalysis: " + e.getMessage());
+                e.printStackTrace();
+                break;
+            }
+        }
     }
 
 

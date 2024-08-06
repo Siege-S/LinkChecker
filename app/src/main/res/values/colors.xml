@@ -3,4 +3,15 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="green">#4CAF50</color>
+
+    //Primary Colors
+    <color name="PriOrange">#ff7f00</color>
+
+    //color for selected item
+    <color name="Selected">#ff7f00</color>
+    <color name="Unselected">#F7F7F7</color>
+
+    // Background
+    <color name="BackgroundColor">#6C130E</color>
+    <color name="FragmentBackgroundColor">#52100C</color>
 </resources>

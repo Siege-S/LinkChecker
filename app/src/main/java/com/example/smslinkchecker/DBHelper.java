@@ -7,6 +7,10 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+
 public class DBHelper extends SQLiteOpenHelper {
     public static final String DATABASE_NAME = "linkGuard.db";
     public static final int DATABASE_VERSION = 1;
@@ -16,13 +20,13 @@ public class DBHelper extends SQLiteOpenHelper {
     }
     @Override
     public void onCreate(SQLiteDatabase db) {
-        String sql = "CREATE TABLE urlmessagestbl (id INTEGER PRIMARY KEY AUTOINCREMENT, url TEXT, contactnumber TEXT, message TEXT, apiurl TEXT, screenshot BLOB)";
+        String sql = "CREATE TABLE urlmessagestbl (id INTEGER PRIMARY KEY AUTOINCREMENT, url TEXT, contactnumber TEXT, message TEXT, apiurl TEXT, screenshot BLOB, timestamp TEXT DEFAULT (datetime('now','localtime')) )";
         db.execSQL(sql);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        db.execSQL("DROP TABLE if exists urlmessagestbl");
+        db.execSQL("DROP TABLE IF EXISTS urlmessagestbl");
         onCreate(db);
     }
 
@@ -36,6 +40,7 @@ public class DBHelper extends SQLiteOpenHelper {
             contentValues.put("message", messageBody);
             contentValues.put("apiurl", apiUrl);
             contentValues.put("screenshot", screenShot);
+            contentValues.put("timestamp", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date()));
 
             long result = db.insert("urlmessagestbl", null, contentValues);
             if (result == -1) {
@@ -51,6 +56,7 @@ public class DBHelper extends SQLiteOpenHelper {
             }
         }
     }
+
 
     public Cursor getdata(){
         SQLiteDatabase DB = this.getReadableDatabase();
