@@ -53,7 +53,7 @@ public class SmsListener extends BroadcastReceiver {
     private static final String API_KEY = "d2a66c9f38303515894f1721ed3aaf695f9ec0eb6ab81c000ef3b4aa228bad94";
     private ExecutorService executorService;
 
-    private static final int POLLING_INTERVAL_MS = 30000; // 30 seconds
+    private static final int POLLING_INTERVAL_MS = 10000; // 10 seconds
     @Override
     public void onReceive(Context context, Intent intent) {
         if (intent.getAction().equals("android.provider.Telephony.SMS_RECEIVED")) {
@@ -254,7 +254,7 @@ public class SmsListener extends BroadcastReceiver {
                     Log.d("SmsListener", "Analysis Results: " + jsonResponse.toString(2));
                     break;
                 } else {
-                    Log.d("SmsListener", "Analysis still queued. Checking again in 30 seconds.");
+                    Log.d("SmsListener", "Analysis still queued. Checking again in 10 seconds.");
                     Thread.sleep(POLLING_INTERVAL_MS);
                 }
 
