@@ -17,16 +17,18 @@ import java.util.ArrayList;
 
 public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
     private Context context;
-    private ArrayList id, sender_id, url_id;
+    private ArrayList id, sender_id, url_id, JSONResponse_id;
     private ArrayList<byte[]> imageURL_id;
 
     private final RecyclerViewInterface recyclerViewInterface;
-    public MyAdapter(Context context, ArrayList id, ArrayList sender_id, ArrayList url_id, ArrayList<byte[]> imageURl_id, RecyclerViewInterface recyclerViewInterface) {
+
+    public MyAdapter(Context context, ArrayList id, ArrayList sender_id, ArrayList url_id, ArrayList JSONResponse_id, ArrayList<byte[]> imageURL_id, RecyclerViewInterface recyclerViewInterface) {
         this.context = context;
         this.id = id;
         this.sender_id = sender_id;
         this.url_id = url_id;
-        this.imageURL_id = imageURl_id;
+        this.JSONResponse_id = JSONResponse_id;
+        this.imageURL_id = imageURL_id;
         this.recyclerViewInterface = recyclerViewInterface;
     }
 
@@ -43,6 +45,7 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
             holder.id.setText(String.valueOf(id.get(position)));
             holder.sender_id.setText(String.valueOf(sender_id.get(position)));
             holder.url_id.setText(String.valueOf(url_id.get(position)));
+            holder.JSONResponse_id.setText(String.valueOf(JSONResponse_id.get(position)));
 
             // Convert byte array to bitmap and set it to the ImageView
             byte[] image = imageURL_id.get(position);
@@ -64,7 +67,7 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {
-        TextView id, sender_id, url_id;
+        TextView id, sender_id, url_id, JSONResponse_id;
         ImageView imageView;
         public ViewHolder(@NonNull View itemView, RecyclerViewInterface recyclerViewInterface) {
             super(itemView);
@@ -72,6 +75,7 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
             sender_id = itemView.findViewById(R.id.txtSender);
             url_id = itemView.findViewById(R.id.txtUrl);
             imageView = itemView.findViewById(R.id.IV_ImageUrl);
+            JSONResponse_id = itemView.findViewById(R.id.txtJSON);
 
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override

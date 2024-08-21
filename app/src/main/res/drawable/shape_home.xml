@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="@color/PriOrange"/> <!-- Background color of the rectangle -->
+    <size android:width="300dp" android:height="150dp"/> <!-- Size of the rectangle -->
+    <corners android:topRightRadius="150dp"
+        android:topLeftRadius="150dp"/> <!-- Optional: Rounded corners -->
+
+</shape>

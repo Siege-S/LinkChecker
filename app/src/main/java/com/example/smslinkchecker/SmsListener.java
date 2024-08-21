@@ -11,6 +11,7 @@ import android.os.Build;
 import android.telephony.SmsMessage;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.Patterns;
 import android.widget.Toast;
 
 // Regex
@@ -54,6 +55,7 @@ public class SmsListener extends BroadcastReceiver {
     private ExecutorService executorService;
 
     private static final int POLLING_INTERVAL_MS = 10000; // 10 seconds
+
     @Override
     public void onReceive(Context context, Intent intent) {
         if (intent.getAction().equals("android.provider.Telephony.SMS_RECEIVED")) {
@@ -69,7 +71,8 @@ public class SmsListener extends BroadcastReceiver {
                         msg_from = msgs[i].getOriginatingAddress();
                         String msgBody = msgs[i].getMessageBody();
                         Log.v("URLs", "From: " + msg_from + " , Body: " + msgBody);
-                        Pattern URL_PATTERN = Pattern.compile("\\b(?:https?://)?(?:www\\.)?([\\w-]+(?:\\.[\\w-]+)*)\\.[a-z]{2,}(?:/[\\w-]+(?:/[^ \\n]*+)*)?\\b");
+//                        Pattern URL_PATTERN = Pattern.compile("\\b(?:https?://)?(?:www\\.)?([\\w-]+(?:\\.[\\w-]+)*)\\.[a-z]{2,}(?:/[\\w-]+(?:/[^ \\n]*+)*)?\\b");
+                        Pattern URL_PATTERN = Patterns.WEB_URL;
                         Matcher URL_MATCHER = URL_PATTERN.matcher(msgBody);
                         while (URL_MATCHER.find()) {
                             url = URL_MATCHER.group();
@@ -77,38 +80,50 @@ public class SmsListener extends BroadcastReceiver {
                             Log.v("URL", url);
                             createNotification(context, "URL Detected in SMS message", url);
 
+                            // Method Call API return API URL
+                            String apiUrl = SnapshotmachineAPI(url);
+                            String finalMsg_from = msg_from;
+
                             // Scan Detected URL using VirusTotal API
                             executorService = Executors.newSingleThreadExecutor();
 
                             executorService.execute(() -> {
                                 try {
                                     String analysisId = scanURL(url);
-                                    getAnalysis(analysisId);
+                                    String analysisResultJSON = getAnalysis(analysisId);
+
+                                    if (analysisResultJSON != null) {
+                                        Bitmap bitmap;
+                                        InputStream in = new URL(apiUrl).openStream();
+                                        bitmap = BitmapFactory.decodeStream(in);
+                                        byte[] image = getBitmapAsByteArray(bitmap);
+
+                                        // Insert into database in SQLite
+                                        DBHelper dbHelper = new DBHelper(context);
+                                        dbHelper.insertData(url, msgBody, finalMsg_from, apiUrl, image, analysisResultJSON);
+                                    }
                                 } catch (IOException e) {
                                     e.printStackTrace();
                                 }
                             });
 
-                            // Method Call API return API URL
-                            String apiUrl = SnapshotmachineAPI(url);
 
-                            String finalMsg_from = msg_from;
-                            new Thread(() -> {
-                                try {
-                                    Bitmap bitmap;
-                                    InputStream in = new URL(apiUrl).openStream();
-                                    bitmap = BitmapFactory.decodeStream(in);
-                                    byte[] image = getBitmapAsByteArray(bitmap);
-
-                                    // insert to database in sqlite
-                                    DBHelper dbHelper = new DBHelper(context);
-                                    dbHelper.insertData(url, msgBody, finalMsg_from, apiUrl, image);
-
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                    Log.e("Screenshot", "Error downloading screenshot: " + e.getMessage());
-                                }
-                            }).start();
+//                            new Thread(() -> {
+//                                try {
+//                                    Bitmap bitmap;
+//                                    InputStream in = new URL(apiUrl).openStream();
+//                                    bitmap = BitmapFactory.decodeStream(in);
+//                                    byte[] image = getBitmapAsByteArray(bitmap);
+//
+//                                    // insert to database in sqlite
+//                                    DBHelper dbHelper = new DBHelper(context);
+//                                    dbHelper.insertData(url, msgBody, finalMsg_from, apiUrl, image);
+//
+//                                } catch (IOException e) {
+//                                    e.printStackTrace();
+//                                    Log.e("Screenshot", "Error downloading screenshot: " + e.getMessage());
+//                                }
+//                            }).start();
                         }
                     }
                 } catch (Exception e) {
@@ -118,6 +133,7 @@ public class SmsListener extends BroadcastReceiver {
             }
         }
     }
+
     public String SnapshotmachineAPI(String url) throws UnsupportedEncodingException, NoSuchAlgorithmException {
         // Call ScreenshotMachine API
         String customerKey = "990acf";
@@ -224,10 +240,10 @@ public class SmsListener extends BroadcastReceiver {
         }
     }
 
-    private void getAnalysis(String analysisId) throws IOException {
+    private String getAnalysis(String analysisId) throws IOException {
         if (analysisId == null || analysisId.isEmpty()) {
             Log.e("SmsListener", "Invalid analysis ID");
-            return;
+            return null;
         }
 
         OkHttpClient client = new OkHttpClient();
@@ -252,7 +268,7 @@ public class SmsListener extends BroadcastReceiver {
 
                 if (!attributes.getString("status").equals("queued")) {
                     Log.d("SmsListener", "Analysis Results: " + jsonResponse.toString(2));
-                    break;
+                    return jsonResponse.toString();
                 } else {
                     Log.d("SmsListener", "Analysis still queued. Checking again in 10 seconds.");
                     Thread.sleep(POLLING_INTERVAL_MS);
@@ -264,6 +280,7 @@ public class SmsListener extends BroadcastReceiver {
                 break;
             }
         }
+        return null;
     }
 
 

@@ -1,6 +1,7 @@
 package com.example.smslinkchecker;
 
 import android.content.Intent;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import android.database.Cursor;
 import android.os.Bundle;
 
@@ -15,6 +16,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -31,11 +33,13 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
 
         // Assuming imageURL.get(position) returns a URL or a Bitmap
+        String id = ID.get(position);
         String sender = Sender.get(position);
         String url = URL.get(position);
+        String jsonResponse = JSONResponse.get(position);
         byte[] imageBytes = imageURL.get(position);  // This is a byte array
 
-        DetailMessageFragment fragment = DetailMessageFragment.newInstance(sender, url, imageBytes);
+        DetailMessageFragment fragment = DetailMessageFragment.newInstance(id, sender, url, jsonResponse, imageBytes);
         fragmentTransaction.replace(R.id.frame_layout, fragment);
         fragmentTransaction.addToBackStack(null);
         fragmentTransaction.commit();
@@ -52,8 +56,9 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
     private String mParam1;
     private String mParam2;
 
+    private SwipeRefreshLayout swipeRefreshLayout;
     RecyclerView recyclerView;
-    ArrayList<String> ID, Sender, URL;
+    ArrayList<String> ID, Sender, URL, JSONResponse;
     ArrayList<byte[]> imageURL;
     DBHelper DB;
     MyAdapter adapter;
@@ -92,6 +97,9 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
         Sender = new ArrayList<>();
         URL = new ArrayList<>();
         imageURL = new ArrayList<>();
+        JSONResponse = new ArrayList<>();
+
+
     }
 
     @Override
@@ -99,31 +107,61 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_message, container, false);
+
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
+        swipeRefreshLayout = view.findViewById(R.id.swipeRefreshLayout);
         recyclerView = view.findViewById(R.id.RV_Messages);
-        adapter = new MyAdapter(getContext(), ID, Sender, URL, imageURL, this);
+        adapter = new MyAdapter(getContext(), ID, Sender, URL,JSONResponse, imageURL, this);
         recyclerView.setAdapter(adapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         displayData();
+
+        // Set up the swipe-to-refresh
+        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                refreshData();
+            }
+        });
+
+
     }
 
     private void displayData() {
         Cursor cursor = DB.getdata();
+        TextView txtdata = getView().findViewById(R.id.txtdata);
         if (cursor.getCount() == 0) {
+            txtdata.setText("No Data Found");
             Toast.makeText(getContext(), "No Data Found", Toast.LENGTH_SHORT).show();
         } else {
+            txtdata.setText("");
             while (cursor.moveToNext()) { // Based on your Database column!!!
                 ID.add(cursor.getString(0));
                 Sender.add(cursor.getString(2));
                 URL.add(cursor.getString(1));
+                JSONResponse.add(cursor.getString(6));
                 imageURL.add(cursor.getBlob(5));
             }
         }
         adapter.notifyDataSetChanged();
+    }
+
+    private void refreshData() {
+        // Clear the current data
+        ID.clear();
+        Sender.clear();
+        URL.clear();
+        JSONResponse.clear();
+        imageURL.clear();
+
+        // Fetch new data
+        displayData();
+
+        // Stop the refreshing animation
+        swipeRefreshLayout.setRefreshing(false);
     }
 }

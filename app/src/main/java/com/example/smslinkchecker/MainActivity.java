@@ -22,7 +22,9 @@ import android.Manifest;
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationManagerCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -37,8 +39,7 @@ import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_NOTIFICATION_PERMISSION = 1001;
-    private Button buttonStartService;
-
+    private static final int REQUEST_SMS_PERMISSION = 1000;
      ActivityMainBinding binding;
 
     @Override
@@ -71,30 +72,11 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
-
-
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && checkSelfPermission(Manifest.permission.RECEIVE_SMS)
-                != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(new String[] {Manifest.permission.RECEIVE_SMS}, 1000);
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECEIVE_SMS) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECEIVE_SMS}, REQUEST_SMS_PERMISSION);
         }
 
-        checkNotificationPermission();
-
-//        buttonStartService = findViewById(R.id.btnStartService);
-//        Intent serviceIntent = new Intent(this, MyForegroundService.class);
-//        if(!foregroundServiceRunning()) {
-//            buttonStartService.setText("Start Service");
-//        } else {
-//            buttonStartService.setText("Stop Service");
-//        }
-//        // Button to start the service
-//
-//        buttonStartService.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                btnStartServiceOnClick(v);
-//            }
-//        });
+//        checkNotificationPermission();
 
     } // onCreate
 
@@ -105,42 +87,37 @@ public class MainActivity extends AppCompatActivity {
         fragmentTransaction.commit();
     }
 
-    //Start Service Method
-//    public void btnStartServiceOnClick(View view) {
-//        Log.v("btnService", "Button Service is CLicked.");
-//        Intent serviceIntent = new Intent(this, MyForegroundService.class);
-//        if(!foregroundServiceRunning()) {
-//            buttonStartService.setText("Stop Service");
-//            startForegroundService(serviceIntent);
-//        } else {
-//            buttonStartService.setText("Start Service");
-//            stopService(serviceIntent);
-//        }
-//    }
-
-
-
-    // Method to check if the foreground service is running
-    public boolean foregroundServiceRunning() {
-        ActivityManager activityManager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
-        for (ActivityManager.RunningServiceInfo service : activityManager.getRunningServices(Integer.MAX_VALUE)) {
-            if (MyForegroundService.class.getName().equals(service.service.getClassName())) {
-                return true;
-            }
-        }
-        return false;
-    }
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == 1000) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // Permission granted, you can proceed with the SMS-related tasks here
-                Toast.makeText(this, "Permission Granted!", Toast.LENGTH_SHORT).show();
+
+        if (requestCode == REQUEST_SMS_PERMISSION) {
+            if (grantResults.length > 0 && grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+                // Permission granted, read SMS inbox
+                if (shouldShowRequestPermissionRationale(Manifest.permission.RECEIVE_SMS)) {
+                    // Show an explanation to the user and re-request the permission
+                    new AlertDialog.Builder(this)
+                            .setTitle("Permission Required")
+                            .setMessage("This app requires SMS permission to function properly. Please grant the permission.")
+                            .setPositiveButton("Grant", (dialog, which) -> {
+                                // Re-request the permission
+                                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECEIVE_SMS}, REQUEST_SMS_PERMISSION);
+                            })
+                            .setNegativeButton("Cancel", (dialog, which) -> {
+                                // User chose not to grant permission
+                                Toast.makeText(this, "Permission to read SMS was denied. The app cannot function without it.", Toast.LENGTH_LONG).show();
+                                finish(); // Close the app
+                            })
+                            .show();
+                } else {
+                    // User checked "Don't ask again" or denied multiple times
+                    Toast.makeText(this, "Permission to read SMS was denied permanently. Please enable it in app settings.", Toast.LENGTH_LONG).show();
+                    // Optionally, redirect the user to app settings
+                    openAppSettings();
+                }
             } else {
-                // Permission denied, handle accordingly (e.g., show a message, disable SMS-related functionality)
-                Toast.makeText(this, "Permission Denied!", Toast.LENGTH_SHORT).show();
-                finish();
+                // Permission granted, read SMS inbox
+                Toast.makeText(this, "Permission to read SMS granted.", Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -155,7 +132,7 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                     // Open app settings
-                    openAppSettings();
+                    openNotificationSettings();
                 }
             });
             builder.setNegativeButton("Cancel", null);
@@ -166,12 +143,18 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void openAppSettings() {
+    private void openNotificationSettings() {
         Intent intent = new Intent();
         intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
         Uri uri = Uri.fromParts("package", getPackageName(), null);
         intent.setData(uri);
         startActivityForResult(intent, REQUEST_NOTIFICATION_PERMISSION);
+    }
+    private void openAppSettings() {
+        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+        Uri uri = Uri.fromParts("package", getPackageName(), null);
+        intent.setData(uri);
+        startActivity(intent);
     }
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {

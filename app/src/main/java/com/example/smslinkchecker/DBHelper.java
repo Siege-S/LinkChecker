@@ -20,7 +20,7 @@ public class DBHelper extends SQLiteOpenHelper {
     }
     @Override
     public void onCreate(SQLiteDatabase db) {
-        String sql = "CREATE TABLE urlmessagestbl (id INTEGER PRIMARY KEY AUTOINCREMENT, url TEXT, contactnumber TEXT, message TEXT, apiurl TEXT, screenshot BLOB, timestamp TEXT DEFAULT (datetime('now','localtime')) )";
+        String sql = "CREATE TABLE urlmessagestbl (id INTEGER PRIMARY KEY AUTOINCREMENT, url TEXT, contactnumber TEXT, message TEXT, apiurl TEXT, screenshot BLOB, analysisJSON TEXT, timestamp TEXT DEFAULT (datetime('now','localtime')) )";
         db.execSQL(sql);
     }
 
@@ -30,7 +30,7 @@ public class DBHelper extends SQLiteOpenHelper {
         onCreate(db);
     }
 
-    public void insertData(String url, String messageBody, String sender, String apiUrl, byte[] screenShot) {
+    public void insertData(String url, String messageBody, String sender, String apiUrl, byte[] screenShot, String analysisJSON) {
         SQLiteDatabase db = null;
         try {
             db = this.getWritableDatabase();
@@ -40,6 +40,7 @@ public class DBHelper extends SQLiteOpenHelper {
             contentValues.put("message", messageBody);
             contentValues.put("apiurl", apiUrl);
             contentValues.put("screenshot", screenShot);
+            contentValues.put("analysisJSON", analysisJSON);
             contentValues.put("timestamp", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date()));
 
             long result = db.insert("urlmessagestbl", null, contentValues);
@@ -63,4 +64,11 @@ public class DBHelper extends SQLiteOpenHelper {
         Cursor cursor = DB.rawQuery("SELECT * FROM urlmessagestbl", null);
         return cursor;
     }
+
+    public void deleteRecord(int id) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.delete("urlmessagestbl", "id=?", new String[]{String.valueOf(id)});
+        db.close();
+    }
+
 }
