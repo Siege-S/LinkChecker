@@ -20,7 +20,7 @@ public class DBHelper extends SQLiteOpenHelper {
     }
     @Override
     public void onCreate(SQLiteDatabase db) {
-        String sql = "CREATE TABLE urlmessagestbl (id INTEGER PRIMARY KEY AUTOINCREMENT, url TEXT, contactnumber TEXT, message TEXT, apiurl TEXT, screenshot BLOB, analysisJSON TEXT, timestamp TEXT DEFAULT (datetime('now','localtime')) )";
+        String sql = "CREATE TABLE urlmessagestbl (id INTEGER PRIMARY KEY AUTOINCREMENT, url TEXT, contactnumber TEXT, message TEXT, apiurl TEXT, analysis TEXT, screenshot BLOB, analysisJSON TEXT, timestamp TEXT DEFAULT (datetime('now','localtime')) )";
         db.execSQL(sql);
     }
 
@@ -30,7 +30,7 @@ public class DBHelper extends SQLiteOpenHelper {
         onCreate(db);
     }
 
-    public void insertData(String url, String messageBody, String sender, String apiUrl, byte[] screenShot, String analysisJSON) {
+    public void insertData(String url, String messageBody, String sender, String apiUrl,String analysis, byte[] screenShot, String analysisJSON) {
         SQLiteDatabase db = null;
         try {
             db = this.getWritableDatabase();
@@ -39,6 +39,7 @@ public class DBHelper extends SQLiteOpenHelper {
             contentValues.put("contactnumber", sender);
             contentValues.put("message", messageBody);
             contentValues.put("apiurl", apiUrl);
+            contentValues.put("analysis", analysis);
             contentValues.put("screenshot", screenShot);
             contentValues.put("analysisJSON", analysisJSON);
             contentValues.put("timestamp", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date()));

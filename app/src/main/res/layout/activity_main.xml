@@ -27,8 +27,8 @@
             android:layout_gravity="center"
             android:layout_marginLeft="20dp"
             android:layout_marginTop="4dp"
-            android:fontFamily="@font/poppins_bold"
-            android:text=" Link Guard"
+            android:fontFamily="@font/poppins_extrabold"
+            android:text=" LinkGuard"
             android:textAlignment="center"
             android:textColor="#F5F4F4"
             android:textSize="24sp"
@@ -60,6 +60,7 @@
         app:itemTextColor="@color/nav_item_color"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:menu="@menu/bottom_navmenu" />
 

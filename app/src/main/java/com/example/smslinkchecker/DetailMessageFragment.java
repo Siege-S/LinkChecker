@@ -90,8 +90,8 @@ public class DetailMessageFragment extends Fragment {
         // Display
         imageView = view.findViewById(R.id.IV_detailImage);
         idTextView.setText(mId);
-        senderTextView.setText(mSender);
-        urlTextView.setText(mURL);
+        senderTextView.setText("Sender: " + mSender);
+        urlTextView.setText("URL Detected: " + mURL);
 
         if (mImage != null) {
             Bitmap bitmap = BitmapFactory.decodeByteArray(mImage, 0, mImage.length);
@@ -113,24 +113,46 @@ public class DetailMessageFragment extends Fragment {
             TextView txtharmless = view.findViewById(R.id.txtJSONHarmless);
             TextView txttimeout = view.findViewById(R.id.txtJSONTimeout);
             TextView txtstatus = view.findViewById(R.id.txtJSONStatus);
+            TextView txtanalysis = view.findViewById(R.id.txtAnalysis);
 
-            String malicious = jsonObject.getJSONObject("data").getJSONObject("attributes").getJSONObject("stats").getString("malicious");
-            txtmalicious.setText(malicious);
+            ImageView IV_analysis = view.findViewById(R.id.IV_analysis);
 
-            String suspicious = jsonObject.getJSONObject("data").getJSONObject("attributes").getJSONObject("stats").getString("suspicious");
-            txtsuspicious.setText(suspicious);
+            int malicious = jsonObject.getJSONObject("data").getJSONObject("attributes").getJSONObject("stats").getInt("malicious");
+            txtmalicious.setText(Integer.toString(malicious));
 
-            String undetected = jsonObject.getJSONObject("data").getJSONObject("attributes").getJSONObject("stats").getString("undetected");
-            txtundetected.setText(undetected);
+            int suspicious = jsonObject.getJSONObject("data").getJSONObject("attributes").getJSONObject("stats").getInt("suspicious");
+            txtsuspicious.setText(Integer.toString(suspicious));
 
-            String timeout = jsonObject.getJSONObject("data").getJSONObject("attributes").getJSONObject("stats").getString("timeout");
-            txttimeout.setText(timeout);
+            int undetected = jsonObject.getJSONObject("data").getJSONObject("attributes").getJSONObject("stats").getInt("undetected");
+            txtundetected.setText(Integer.toString(undetected));
 
-            String harmless = jsonObject.getJSONObject("data").getJSONObject("attributes").getJSONObject("stats").getString("harmless");
-            txtharmless.setText(harmless);
+            int timeout = jsonObject.getJSONObject("data").getJSONObject("attributes").getJSONObject("stats").getInt("timeout");
+            txttimeout.setText(Integer.toString(timeout));
+
+            int harmless = jsonObject.getJSONObject("data").getJSONObject("attributes").getJSONObject("stats").getInt("harmless");
+            txtharmless.setText(Integer.toString(harmless));
 
             String status = jsonObject.getJSONObject("data").getJSONObject("attributes").getString("status");
             txtstatus.setText(status);
+
+            if(malicious > 0 && suspicious > 0){
+                txtanalysis.setText("VirusTotal identified the URL as both malicious and a phishing threat");
+                txtanalysis.setTextColor(getResources().getColor(R.color.red));
+                IV_analysis.setImageResource(R.drawable.warning_red);
+
+            } else if (suspicious > 0) {
+                txtanalysis.setText("VirusTotal identified the URL as suspicious or a phishing threat");
+                txtanalysis.setTextColor(getResources().getColor(R.color.red));
+                IV_analysis.setImageResource(R.drawable.warning_red);
+            } else if (malicious > 0) {
+                txtanalysis.setText("VirusTotal identified the URL as Malicious");
+                txtanalysis.setTextColor(getResources().getColor(R.color.red));
+                IV_analysis.setImageResource(R.drawable.warning_red);
+            } else {
+                txtanalysis.setText("VirusTotal report shows the URL is Harmless");
+                txtanalysis.setTextColor(getResources().getColor(R.color.green));
+                IV_analysis.setImageResource(R.drawable.check_green);
+            }
 
         } catch (JSONException e) {
             throw new RuntimeException(e);
@@ -147,6 +169,22 @@ public class DetailMessageFragment extends Fragment {
         });
 
         Button btndelete = view.findViewById(R.id.btndelete);
+        Button btnBack = view.findViewById(R.id.btnBack);
+
+        btnBack.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Go back to the previous fragment or activity
+                FragmentManager fragmentManager = getActivity().getSupportFragmentManager();
+                FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+
+                MessageFragment messageFragment = new MessageFragment(); // or MessageFragment.newInstance() if you have arguments
+
+                fragmentTransaction.replace(R.id.frame_layout, messageFragment);
+//                fragmentTransaction.addToBackStack(null); // Optional: add the transaction to the back stack so the user can navigate back
+                fragmentTransaction.commit();
+            }
+        });
         btndelete.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {

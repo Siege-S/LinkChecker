@@ -3,6 +3,8 @@ package com.example.smslinkchecker;
 import android.content.Intent;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -19,6 +21,10 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
+
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 
 /**
@@ -120,6 +126,13 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         displayData();
 
+//        for (String url: URL) {
+//            if(isAdultContent(url)){
+//                System.out.println("Adult Content: " + url);
+//
+//            }
+//        }
+
         // Set up the swipe-to-refresh
         swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
@@ -128,7 +141,6 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
             }
         });
 
-
     }
 
     private void displayData() {
@@ -136,30 +148,29 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
         TextView txtdata = getView().findViewById(R.id.txtdata);
         if (cursor.getCount() == 0) {
             txtdata.setText("No Data Found");
-            Toast.makeText(getContext(), "No Data Found", Toast.LENGTH_SHORT).show();
+//            Toast.makeText(getContext(), "No Data Found", Toast.LENGTH_SHORT).show();
         } else {
             txtdata.setText("");
             while (cursor.moveToNext()) { // Based on your Database column!!!
                 ID.add(cursor.getString(0));
                 Sender.add(cursor.getString(2));
                 URL.add(cursor.getString(1));
-                JSONResponse.add(cursor.getString(6));
-                imageURL.add(cursor.getBlob(5));
+                JSONResponse.add(cursor.getString(7));
+                imageURL.add(cursor.getBlob(6));
             }
         }
         adapter.notifyDataSetChanged();
     }
 
     private void refreshData() {
-        // Clear the current data
-        ID.clear();
-        Sender.clear();
-        URL.clear();
-        JSONResponse.clear();
-        imageURL.clear();
+        FragmentManager fragmentManager = getActivity().getSupportFragmentManager();
+        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
 
-        // Fetch new data
-        displayData();
+        MessageFragment messageFragment = new MessageFragment(); // or MessageFragment.newInstance() if you have arguments
+
+        fragmentTransaction.replace(R.id.frame_layout, messageFragment);
+        // fragmentTransaction.addToBackStack(null); // Optional: add the transaction to the back stack so the user can navigate back
+        fragmentTransaction.commit();
 
         // Stop the refreshing animation
         swipeRefreshLayout.setRefreshing(false);

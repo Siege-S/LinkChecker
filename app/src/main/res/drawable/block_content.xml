@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <shape xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- Background color with transparency -->
-    <solid android:color="#26C6C6C6"/> <!-- 50% opacity -->
+    <solid android:color="#7FC6C6C6"/> <!-- 50% opacity -->
     <!-- Corner radius -->
 
     <corners android:radius="20dp" />

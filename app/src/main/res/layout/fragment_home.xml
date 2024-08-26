@@ -49,9 +49,10 @@
             app:layout_constraintTop_toBottomOf="@+id/imageView4" />
 
         <TextView
+            android:id="@+id/textView2"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="32dp"
+            android:layout_marginTop="16dp"
             android:fontFamily="@font/poppins_medium"
             android:paddingLeft="20dp"
             android:paddingRight="20dp"
@@ -72,13 +73,13 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="@+id/linearLayout2"
-            app:srcCompat="@drawable/design5" />
+            app:srcCompat="@drawable/design6" />
 
         <TextView
             android:id="@+id/textView6"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="256dp"
+            android:layout_marginBottom="272dp"
             android:fontFamily="@font/poppins_extrabold"
             android:text="How LinkGuard Works"
             android:textColor="@color/white"
@@ -92,7 +93,7 @@
             android:id="@+id/textView7"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="92dp"
+            android:layout_marginBottom="112dp"
             android:fontFamily="@font/poppins_medium"
             android:lineSpacingExtra="8sp"
             android:paddingLeft="25dp"
@@ -104,6 +105,45 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="parent" />
+
+        <ImageView
+            android:id="@+id/imageView"
+            android:layout_width="57dp"
+            android:layout_height="51dp"
+            android:layout_marginStart="75dp"
+            android:layout_marginBottom="32dp"
+            android:background="@drawable/screenshotmachine"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <TextView
+            android:id="@+id/textView8"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/poppins_regular"
+            android:text="Screenshotmachine"
+            android:textColor="@color/white"
+            android:textSize="10sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.17"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/imageView"
+            app:layout_constraintVertical_bias="0.0" />
+
+        <ImageView
+            android:id="@+id/IV_virusTotal"
+            android:layout_width="147dp"
+            android:layout_height="74dp"
+            android:layout_marginBottom="16dp"
+            android:background="@drawable/virustotal"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.757"
+            app:layout_constraintStart_toStartOf="parent" />
+
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
