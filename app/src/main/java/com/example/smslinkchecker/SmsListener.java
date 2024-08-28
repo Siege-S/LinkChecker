@@ -224,33 +224,6 @@ public class SmsListener extends BroadcastReceiver {
         return outputStream.toByteArray();
     }
 
-//    private void downloadScreenshot(String apiUrl, Context context) {
-//        new Thread(() -> {
-//            try {
-//                URLConnection connection = new URL(apiUrl).openConnection();
-//                connection.addRequestProperty("User-Agent", "Mozilla/4.0");
-//                InputStream inputStream = connection.getInputStream();
-//
-//                File screenshotFile = new File(context.getExternalFilesDir(null), "screenshot.png");
-//                FileOutputStream outputStream = new FileOutputStream(screenshotFile);
-//
-//                byte[] buffer = new byte[1024];
-//                int bytesRead;
-//                while ((bytesRead = inputStream.read(buffer)) != -1) {
-//                    outputStream.write(buffer, 0, bytesRead);
-//                }
-//
-//                inputStream.close();
-//                outputStream.close();
-//                Log.v("test", "Screenshot saved: " + screenshotFile.getAbsolutePath());
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//                Log.e("test", "Error downloading screenshot: " + e.getMessage());
-//            }
-//        }).start();
-//    }
-
-
     private void createNotification(Context context, String title, String url) {
         NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
 

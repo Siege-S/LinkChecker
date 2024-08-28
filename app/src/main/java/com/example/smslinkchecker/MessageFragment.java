@@ -1,10 +1,13 @@
 package com.example.smslinkchecker;
 
+import android.content.Context;
 import android.content.Intent;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -18,6 +21,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -105,7 +109,6 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
         imageURL = new ArrayList<>();
         JSONResponse = new ArrayList<>();
 
-
     }
 
     @Override
@@ -126,12 +129,18 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         displayData();
 
-//        for (String url: URL) {
-//            if(isAdultContent(url)){
-//                System.out.println("Adult Content: " + url);
-//
-//            }
-//        }
+        ImageView internet = view.findViewById(R.id.IV_Internet);
+        TextView txtInternet = view.findViewById(R.id.txtInternet);
+
+        if (isInternetConnected(getContext())) {
+            System.out.println("Internet Connected");
+            internet.setVisibility(View.GONE);
+            txtInternet.setVisibility(View.GONE);
+        } else {
+            System.out.println("Internet Not Connected");
+            internet.setVisibility(View.VISIBLE);
+            txtInternet.setVisibility(View.VISIBLE);
+        }
 
         // Set up the swipe-to-refresh
         swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
@@ -175,4 +184,17 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
         // Stop the refreshing animation
         swipeRefreshLayout.setRefreshing(false);
     }
+
+    public static boolean isInternetConnected(Context context) {
+        ConnectivityManager connectivityManager =
+                (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        if (connectivityManager != null) {
+            NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+            return networkInfo != null && networkInfo.isConnected();
+        }
+
+        return false;
+    }
+
 }
