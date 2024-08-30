@@ -1,22 +1,13 @@
 package com.example.smslinkchecker;
 
-import android.annotation.SuppressLint;
-import android.app.ActivityManager;
 import android.app.AlertDialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
-import android.util.Log;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.ListView;
 import android.widget.Toast;
 
 import android.Manifest;
@@ -35,12 +26,10 @@ import androidx.fragment.app.FragmentTransaction;
 
 import com.example.smslinkchecker.databinding.ActivityMainBinding;
 
-import java.util.ArrayList;
-
 
 public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_NOTIFICATION_PERMISSION = 1001;
-    private static final int REQUEST_SMS_PERMISSION = 1000;
+    public static final int REQUEST_SMS_PERMISSION = 1000;
      ActivityMainBinding binding;
 
     @Override
@@ -58,8 +47,11 @@ public class MainActivity extends AppCompatActivity {
             else if (itemId == R.id.messages) {// Handle messages action
                 replaceFragment(new MessageFragment());
             }
-            else if (itemId == R.id.history) {// Handle history action
-                replaceFragment(new HistoryFragment());
+            else if (itemId == R.id.contacts) {// Handle contacts action
+                replaceFragment(new ContactFragment());
+            }
+            else if (itemId == R.id.settings) {// Handle settings action
+                replaceFragment(new SettingsFragment());
             }
             else {
                 return false;
@@ -100,7 +92,6 @@ public class MainActivity extends AppCompatActivity {
 
         if (requestCode == REQUEST_SMS_PERMISSION) {
             if (grantResults.length > 0 && grantResults[0] != PackageManager.PERMISSION_GRANTED) {
-                // Permission granted, read SMS inbox
                 if (shouldShowRequestPermissionRationale(Manifest.permission.RECEIVE_SMS)) {
                     // Show an explanation to the user and re-request the permission
                     new AlertDialog.Builder(this)
@@ -157,7 +148,7 @@ public class MainActivity extends AppCompatActivity {
         intent.setData(uri);
         startActivityForResult(intent, REQUEST_NOTIFICATION_PERMISSION);
     }
-    private void openAppSettings() {
+    public void openAppSettings() {
         Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
         Uri uri = Uri.fromParts("package", getPackageName(), null);
         intent.setData(uri);

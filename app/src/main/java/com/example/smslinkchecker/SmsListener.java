@@ -65,64 +65,72 @@ public class SmsListener extends BroadcastReceiver {
             SmsMessage[] msgs;
             String msg_from;
             if (bundle != null) {
-                try {
-                    Object[] pdus = (Object[]) bundle.get("pdus");
-                    msgs = new SmsMessage[pdus.length];
-                    for (int i = 0; i < msgs.length; i++) {
-                        msgs[i] = SmsMessage.createFromPdu((byte[]) pdus[i]);
-                        msg_from = msgs[i].getOriginatingAddress();
-                        String msgBody = msgs[i].getMessageBody();
-                        Log.v("URLs", "From: " + msg_from + " , Body: " + msgBody);
 
-                        // List to store detected URLs
-                        List<String> urls = new ArrayList<>();
+                    try {
+                        Object[] pdus = (Object[]) bundle.get("pdus");
+                        msgs = new SmsMessage[pdus.length];
+                        for (int i = 0; i < msgs.length; i++) {
+                            msgs[i] = SmsMessage.createFromPdu((byte[]) pdus[i]);
+                            msg_from = msgs[i].getOriginatingAddress();
+                            String msgBody = msgs[i].getMessageBody();
+                            Log.v("URLs", "From: " + msg_from + " , Body: " + msgBody);
 
-                        Pattern URL_PATTERN = Patterns.WEB_URL; // Regular expression pattern to detect Web URLs
-                        Matcher URL_MATCHER = URL_PATTERN.matcher(msgBody);
-                        while (URL_MATCHER.find()) {
-                            String detectedUrl = URL_MATCHER.group();
-                            urls.add(detectedUrl);  // Add URL to list
-                            Toast.makeText(context, "URL Detected: " + detectedUrl, Toast.LENGTH_LONG).show();
-                            Log.v("URL", detectedUrl);
-                        }
+                            // List to store detected URLs
+                            List<String> urls = new ArrayList<>();
 
-                        // Process each URL in the list
-                        for (String url : urls) {
-                            createNotification(context, "URL Detected in SMS message", url);
+                            Pattern URL_PATTERN = Patterns.WEB_URL; // Regular expression pattern to detect Web URLs
+                            Matcher URL_MATCHER = URL_PATTERN.matcher(msgBody);
+                            while (URL_MATCHER.find()) {
+                                String detectedUrl = URL_MATCHER.group();
+                                urls.add(detectedUrl);  // Add URL to list
+                                Toast.makeText(context, "URL Detected: " + detectedUrl, Toast.LENGTH_LONG).show();
+                                Log.v("URL", detectedUrl);
+                            }
+                            if(!MessageFragment.isInternetConnected(context)){
+                                Toast.makeText(context, "No Internet Connection", Toast.LENGTH_SHORT).show();
+                                noInternet(context, urls.toString());
+                            } else {
+                                // Process each URL in the list
+                                for (String url : urls) {
+                                    createNotification(context, "URL Detected in SMS message", url);
+                                    // Method Call API return API URL
+                                    String apiUrl = SnapshotmachineAPI(url);
+                                    String finalMsg_from = msg_from;
 
-                            // Method Call API return API URL
-                            String apiUrl = SnapshotmachineAPI(url);
-                            String finalMsg_from = msg_from;
+                                    // Scan Detected URL and Get Analysis Result using VirusTotal API
+                                    executorService = Executors.newSingleThreadExecutor();
+                                    executorService.execute(() -> {
+                                        try {
+                                            String analysisId = scanURL(context, url);
+                                            String analysisResultJSON = getAnalysis(analysisId);
 
-                            // Scan Detected URL and Get Analysis Result using VirusTotal API
-                            executorService = Executors.newSingleThreadExecutor();
-                            executorService.execute(() -> {
-                                try {
-                                    String analysisId = scanURL(url);
-                                    String analysisResultJSON = getAnalysis(analysisId);
+                                            if (analysisResultJSON != null) {
+                                                Bitmap bitmap;
+                                                InputStream in = new URL(apiUrl).openStream();
+                                                bitmap = BitmapFactory.decodeStream(in);
+                                                byte[] image = getBitmapAsByteArray(bitmap);
 
-                                    if (analysisResultJSON != null) {
-                                        Bitmap bitmap;
-                                        InputStream in = new URL(apiUrl).openStream();
-                                        bitmap = BitmapFactory.decodeStream(in);
-                                        byte[] image = getBitmapAsByteArray(bitmap);
+                                                //Notification for analysis
+                                                String analysis = NotifyResult(context, url, analysisResultJSON);
 
-                                        //Notification for analysis
-                                        String analysis = NotifyResult(context, url, analysisResultJSON);
-
-                                        // Insert into database in SQLite
-                                        DBHelper dbHelper = new DBHelper(context);
-                                        dbHelper.insertData(url, msgBody, finalMsg_from, apiUrl, analysis, image, analysisResultJSON);
-                                    }
-                                } catch (IOException e) {
-                                    e.printStackTrace();
+                                                // Insert into database in SQLite
+                                                DBHelper dbHelper = new DBHelper(context);
+                                                dbHelper.insertData(url, msgBody, finalMsg_from, apiUrl, analysis, image, analysisResultJSON);
+                                            }
+                                        } catch (IOException e) {
+                                            System.out.println("NO Internet Connection");
+                                            e.printStackTrace();
+                                        }
+                                    });
                                 }
-                            });
+                            }
+
                         }
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+
+
             }
         }
     }
@@ -244,7 +252,7 @@ public class SmsListener extends BroadcastReceiver {
         notificationManager.notify(NOTIFICATION_ID, builder.build());
     }
 
-    private String scanURL(String url) throws IOException {
+    private String scanURL(Context context, String url) throws IOException {
         OkHttpClient client = new OkHttpClient();
 
         MediaType mediaType = MediaType.parse("application/x-www-form-urlencoded");
@@ -259,6 +267,7 @@ public class SmsListener extends BroadcastReceiver {
 
         try (Response response = client.newCall(request).execute()) {
             if (!response.isSuccessful()) {
+                Log.v("ScanURL", "Unexpected code " + response);
                 throw new IOException("Unexpected code " + response);
             }
 
@@ -271,14 +280,54 @@ public class SmsListener extends BroadcastReceiver {
             return jsonResponse.getJSONObject("data").getString("id");
 
         } catch (IOException | JSONException e) {
+            invalidURL(context, url);
             e.printStackTrace();
             return null;
         }
     }
 
+    private void invalidURL(Context context, String url) {
+        NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+
+        // Create NotificationChannel for Android Oreo and higher
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, "SMS Channel", NotificationManager.IMPORTANCE_DEFAULT);
+            notificationManager.createNotificationChannel(channel);
+        }
+
+        // Build the notification
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setContentTitle("Invalid URL")
+                .setContentText("This URL does not exist" + url)
+                .setPriority(NotificationCompat.PRIORITY_HIGH);
+
+        // Show the notification
+        notificationManager.notify(6, builder.build());
+    }
+    private void noInternet(Context context, String url) {
+        NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+
+        // Create NotificationChannel for Android Oreo and higher
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, "SMS Channel", NotificationManager.IMPORTANCE_DEFAULT);
+            notificationManager.createNotificationChannel(channel);
+        }
+
+        // Build the notification
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setContentTitle("No Internet Connection")
+                .setContentText("Cannot process URL: " + url)
+                .setPriority(NotificationCompat.PRIORITY_HIGH);
+
+        // Show the notification
+        notificationManager.notify(7, builder.build());
+    }
+
     private String getAnalysis(String analysisId) throws IOException {
         if (analysisId == null || analysisId.isEmpty()) {
-            Log.e("SmsListener", "Invalid analysis ID");
+            Log.e("SmsListener", "No Analysis ID provided.");
             return null;
         }
 

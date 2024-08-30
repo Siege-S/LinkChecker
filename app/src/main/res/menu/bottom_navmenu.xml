@@ -10,7 +10,12 @@
         android:icon="@drawable/baseline_message_24"
         android:title="Messages" />
     <item
-        android:id="@+id/history"
-        android:icon="@drawable/baseline_history_24"
-        android:title="History" />
+        android:id="@+id/contacts"
+        android:icon="@drawable/contacts"
+        android:title="Contacts" />
+
+    <item
+        android:id="@+id/settings"
+        android:icon="@drawable/settings"
+        android:title="Settings" />
 </menu>
