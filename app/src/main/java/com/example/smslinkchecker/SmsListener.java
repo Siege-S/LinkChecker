@@ -8,6 +8,8 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
 import android.telephony.SmsMessage;
 import android.os.Bundle;
 import android.util.Log;
@@ -54,7 +56,6 @@ public class SmsListener extends BroadcastReceiver {
     private static final int NOTIFICATION_ID = 123;
 
     private static final String API_KEY = "d2a66c9f38303515894f1721ed3aaf695f9ec0eb6ab81c000ef3b4aa228bad94";
-    private ExecutorService executorService;
 
     private static final int POLLING_INTERVAL_MS = 10000; // 10 seconds
 
@@ -65,7 +66,6 @@ public class SmsListener extends BroadcastReceiver {
             SmsMessage[] msgs;
             String msg_from;
             if (bundle != null) {
-
                     try {
                         Object[] pdus = (Object[]) bundle.get("pdus");
                         msgs = new SmsMessage[pdus.length];
@@ -86,6 +86,7 @@ public class SmsListener extends BroadcastReceiver {
                                 Toast.makeText(context, "URL Detected: " + detectedUrl, Toast.LENGTH_LONG).show();
                                 Log.v("URL", detectedUrl);
                             }
+
                             if(!MessageFragment.isInternetConnected(context)){
                                 Toast.makeText(context, "No Internet Connection", Toast.LENGTH_SHORT).show();
                                 noInternet(context, urls.toString());
@@ -98,30 +99,48 @@ public class SmsListener extends BroadcastReceiver {
                                     String finalMsg_from = msg_from;
 
                                     // Scan Detected URL and Get Analysis Result using VirusTotal API
-                                    executorService = Executors.newSingleThreadExecutor();
+                                    ExecutorService executorService = Executors.newSingleThreadExecutor();
                                     executorService.execute(() -> {
                                         try {
+                                            // Asynchronously scan URL
                                             String analysisId = scanURL(context, url);
-                                            String analysisResultJSON = getAnalysis(analysisId);
 
-                                            if (analysisResultJSON != null) {
-                                                Bitmap bitmap;
-                                                InputStream in = new URL(apiUrl).openStream();
-                                                bitmap = BitmapFactory.decodeStream(in);
-                                                byte[] image = getBitmapAsByteArray(bitmap);
+                                            if (analysisId != null) {
+                                                // Asynchronously get analysis result
+                                                String analysisResultJSON = getAnalysis(analysisId);
 
-                                                //Notification for analysis
-                                                String analysis = NotifyResult(context, url, analysisResultJSON);
+                                                if (analysisResultJSON != null) {
+                                                    // Download image and process the analysis result on a background thread
+                                                    Bitmap bitmap;
+                                                    InputStream in = new URL(apiUrl).openStream();
+                                                    bitmap = BitmapFactory.decodeStream(in);
+                                                    byte[] image = getBitmapAsByteArray(bitmap);
 
-                                                // Insert into database in SQLite
-                                                DBHelper dbHelper = new DBHelper(context);
-                                                dbHelper.insertData(url, msgBody, finalMsg_from, apiUrl, analysis, image, analysisResultJSON);
+                                                    // Notify the user with the analysis result on the main thread
+                                                    new Handler(Looper.getMainLooper()).post(() -> {
+                                                        String analysis = NotifyResult(context, url, analysisResultJSON);
+
+                                                        // Insert into database in SQLite
+                                                        DBHelper dbHelper = new DBHelper(context);
+                                                        dbHelper.insertData(url, msgBody, finalMsg_from, apiUrl, analysis, image, analysisResultJSON);
+                                                    });
+                                                } else {
+                                                    Log.v("GetAnalysis", "Failed to get analysis result.");
+                                                    System.out.println("Failed to get analysis result.");
+                                                }
+                                            } else {
+                                                Log.v("ScanURL", "Failed to scan URL.");
+                                                System.out.println("Failed to scan URL.");
                                             }
                                         } catch (IOException e) {
-                                            System.out.println("NO Internet Connection");
+                                            Log.v("SmsListener", "Error in VirusTotal: " + e.getMessage());
                                             e.printStackTrace();
+                                        } finally {
+                                            // Shutdown the executor service
+                                            executorService.shutdown();
                                         }
                                     });
+
                                 }
                             }
 
@@ -129,11 +148,10 @@ public class SmsListener extends BroadcastReceiver {
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
-
-
             }
         }
     }
+
 
     private String NotifyResult(Context context,String url, String JSON){
         NotificationManager notificationManager = (NotificationManager)  context.getSystemService(Context.NOTIFICATION_SERVICE);
@@ -217,7 +235,7 @@ public class SmsListener extends BroadcastReceiver {
         options.put("device", "desktop");
         options.put("format", "png");
         options.put("cacheLimit", "0");
-        options.put("delay", "5000");
+        options.put("delay", "10000");
         options.put("zoom", "100");
 
         String apiUrl = sm.generateScreenshotApiUrl(options);
@@ -275,11 +293,12 @@ public class SmsListener extends BroadcastReceiver {
             String responseBody = response.body().string();
             System.out.println("Response received: " + responseBody);
 
-            // Assuming the response is JSON, you can parse it to extract the analysis ID
+            // response is JSON, you can parse it to extract the analysis ID
             JSONObject jsonResponse = new JSONObject(responseBody);
             return jsonResponse.getJSONObject("data").getString("id");
 
         } catch (IOException | JSONException e) {
+            Log.v("ScanURL", "Error in scanURL: " + e.getMessage());
             invalidURL(context, url);
             e.printStackTrace();
             return null;
@@ -298,8 +317,8 @@ public class SmsListener extends BroadcastReceiver {
         // Build the notification
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.mipmap.ic_launcher)
-                .setContentTitle("Invalid URL")
-                .setContentText("This URL does not exist" + url)
+                .setContentTitle("Error in Scanning URL")
+                .setContentText("URL: " + url)
                 .setPriority(NotificationCompat.PRIORITY_HIGH);
 
         // Show the notification

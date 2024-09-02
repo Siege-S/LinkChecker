@@ -13,8 +13,8 @@
     </stroke>
 
     <padding
-        android:left="35dp"
-        android:top="20dp"
-        android:right="35dp"
-        android:bottom="25dp" />
+        android:left="10dp"
+        android:top="10dp"
+        android:right="10dp"
+        android:bottom="10dp" />
 </shape>

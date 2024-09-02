@@ -68,7 +68,7 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
 
     private SwipeRefreshLayout swipeRefreshLayout;
     RecyclerView recyclerView;
-    ArrayList<String> ID, Sender, URL, JSONResponse;
+    ArrayList<String> ID, Sender, URL, JSONResponse, Date;
     ArrayList<byte[]> imageURL;
     DBHelper DB;
     MyAdapter adapter;
@@ -108,6 +108,7 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
         URL = new ArrayList<>();
         imageURL = new ArrayList<>();
         JSONResponse = new ArrayList<>();
+        Date = new ArrayList<>();
 
     }
 
@@ -124,7 +125,13 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
         super.onViewCreated(view, savedInstanceState);
         swipeRefreshLayout = view.findViewById(R.id.swipeRefreshLayout);
         recyclerView = view.findViewById(R.id.RV_Messages);
-        adapter = new MyAdapter(getContext(), ID, Sender, URL,JSONResponse, imageURL, this);
+        // Set LayoutManager with reverseLayout and stackFromEnd properties
+        LinearLayoutManager layoutManager = new LinearLayoutManager(getContext());
+        layoutManager.setReverseLayout(true);
+        layoutManager.setStackFromEnd(true);
+        recyclerView.setLayoutManager(layoutManager);
+
+        adapter = new MyAdapter(getContext(), ID, Sender, URL,JSONResponse, imageURL, Date, this);
         recyclerView.setAdapter(adapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         displayData();
@@ -166,6 +173,7 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
                 URL.add(cursor.getString(1));
                 JSONResponse.add(cursor.getString(7));
                 imageURL.add(cursor.getBlob(6));
+                Date.add(cursor.getString(8));
             }
         }
         adapter.notifyDataSetChanged();

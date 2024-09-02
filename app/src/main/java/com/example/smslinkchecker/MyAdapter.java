@@ -24,18 +24,19 @@ import java.util.ArrayList;
 
 public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
     private Context context;
-    private ArrayList id, sender_id, url_id, JSONResponse_id;
+    private ArrayList id, sender_id, url_id, JSONResponse_id, date_id;
     private ArrayList<byte[]> imageURL_id;
 
     private final RecyclerViewInterface recyclerViewInterface;
 
-    public MyAdapter(Context context, ArrayList id, ArrayList sender_id, ArrayList url_id, ArrayList JSONResponse_id, ArrayList<byte[]> imageURL_id, RecyclerViewInterface recyclerViewInterface) {
+    public MyAdapter(Context context, ArrayList id, ArrayList sender_id, ArrayList url_id, ArrayList JSONResponse_id, ArrayList<byte[]> imageURL_id,ArrayList date_id, RecyclerViewInterface recyclerViewInterface) {
         this.context = context;
         this.id = id;
         this.sender_id = sender_id;
         this.url_id = url_id;
         this.JSONResponse_id = JSONResponse_id;
         this.imageURL_id = imageURL_id;
+        this.date_id = date_id;
         this.recyclerViewInterface = recyclerViewInterface;
     }
 
@@ -55,6 +56,7 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
             holder.sender_id.setText(String.valueOf(sender_id.get(position)));
             holder.url_id.setText(String.valueOf(url_id.get(position)));
             holder.JSONResponse_id.setText(String.valueOf(JSONResponse_id.get(position)));
+            holder.txtDate.setText(String.valueOf(date_id.get(position)));
 
             // Convert byte array to bitmap and set it to the ImageView
             byte[] image = imageURL_id.get(position);
@@ -132,7 +134,7 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {
-        TextView id, sender_id, url_id, JSONResponse_id, txtAnalsis;
+        TextView id, sender_id, url_id, JSONResponse_id, txtAnalsis, txtDate;
         ImageView imageView, IV_analysis;
 
         LinearLayout clickLayout;
@@ -144,6 +146,7 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
             url_id = itemView.findViewById(R.id.txtUrl);
             imageView = itemView.findViewById(R.id.IV_ImageUrl);
             JSONResponse_id = itemView.findViewById(R.id.txtJSON);
+            txtDate = itemView.findViewById(R.id.txtDate);
 
             // Added for analysis
             txtAnalsis = itemView.findViewById(R.id.txtAnalysis);

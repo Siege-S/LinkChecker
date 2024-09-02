@@ -5,6 +5,7 @@ import static com.example.smslinkchecker.MainActivity.REQUEST_SMS_PERMISSION;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 
@@ -23,6 +24,7 @@ import android.widget.CompoundButton;
 import android.widget.Switch;
 import android.widget.Toast;
 import android.Manifest;
+
 /**
  * A simple {@link Fragment} subclass.
  * Use the {@link SettingsFragment#newInstance} factory method to
@@ -104,12 +106,17 @@ public class SettingsFragment extends Fragment {
                     switchPermission.setChecked(hasSmsPermission);
                 } else {
                     Toast.makeText(getContext(), "User must manually disable SMS permissions.", Toast.LENGTH_SHORT).show();
+                    openAppSettings();
                     switchPermission.setChecked(hasSmsPermission);
-                    // Handle the case where the user wants to disable SMS permissions
-                    // You might want to show a message or handle it differently here
                 }
             }
         });
+    }
+    private void openAppSettings() {
+        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+        Uri uri = Uri.fromParts("package", getContext().getPackageName(), null);
+        intent.setData(uri);
+        startActivity(intent);
     }
 
     private void autoStartSettings() {

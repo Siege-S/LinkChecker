@@ -62,7 +62,7 @@ public class DBHelper extends SQLiteOpenHelper {
 
     public Cursor getdata(){
         SQLiteDatabase DB = this.getReadableDatabase();
-        Cursor cursor = DB.rawQuery("SELECT * FROM urlmessagestbl", null);
+        Cursor cursor = DB.rawQuery("SELECT * FROM urlmessagestbl ORDER BY timestamp DESC", null);
         return cursor;
     }
 
