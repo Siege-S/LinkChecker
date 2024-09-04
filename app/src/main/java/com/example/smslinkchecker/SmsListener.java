@@ -2,6 +2,7 @@ package com.example.smslinkchecker;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -94,14 +95,15 @@ public class SmsListener extends BroadcastReceiver {
                                 // Process each URL in the list
                                 for (String url : urls) {
                                     createNotification(context, "URL Detected in SMS message", url);
-                                    // Method Call API return API URL
-                                    String apiUrl = SnapshotmachineAPI(url);
+
                                     String finalMsg_from = msg_from;
 
                                     // Scan Detected URL and Get Analysis Result using VirusTotal API
                                     ExecutorService executorService = Executors.newSingleThreadExecutor();
                                     executorService.execute(() -> {
                                         try {
+                                            // Method Call API return API URL
+                                            String apiUrl = SnapshotmachineAPI(url);
                                             // Asynchronously scan URL
                                             String analysisId = scanURL(context, url);
 
@@ -125,16 +127,21 @@ public class SmsListener extends BroadcastReceiver {
                                                         dbHelper.insertData(url, msgBody, finalMsg_from, apiUrl, analysis, image, analysisResultJSON);
                                                     });
                                                 } else {
+                                                    showRetryNotification(context, url, msgBody, finalMsg_from);
                                                     Log.v("GetAnalysis", "Failed to get analysis result.");
                                                     System.out.println("Failed to get analysis result.");
                                                 }
                                             } else {
+                                                showRetryNotification(context, url, msgBody, finalMsg_from);
                                                 Log.v("ScanURL", "Failed to scan URL.");
                                                 System.out.println("Failed to scan URL.");
                                             }
                                         } catch (IOException e) {
                                             Log.v("SmsListener", "Error in VirusTotal: " + e.getMessage());
+                                            showRetryNotification(context, url, msgBody, finalMsg_from);
                                             e.printStackTrace();
+                                        } catch (NoSuchAlgorithmException e) {
+                                            throw new RuntimeException(e);
                                         } finally {
                                             // Shutdown the executor service
                                             executorService.shutdown();
@@ -152,8 +159,34 @@ public class SmsListener extends BroadcastReceiver {
         }
     }
 
+    public void showRetryNotification(Context context, String url, String sender, String message) {
+        Intent retryIntent = new Intent(context, RetryReceiver.class);
+        retryIntent.putExtra("url", url);
+        retryIntent.putExtra("message", message);
+        retryIntent.putExtra("sender", sender);
 
-    private String NotifyResult(Context context,String url, String JSON){
+        // Use FLAG_IMMUTABLE if targeting Android 12 or higher, otherwise use FLAG_UPDATE_CURRENT
+        PendingIntent retryPendingIntent = PendingIntent.getBroadcast(
+                context,
+                0,
+                retryIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ? PendingIntent.FLAG_IMMUTABLE : 0)
+        );
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setContentTitle("Scan Failed")
+                .setContentText("Tap to retry scanning the URL.")
+                .addAction(R.drawable.retry, "Retry", retryPendingIntent)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setAutoCancel(true);
+
+        NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.notify(NOTIFICATION_ID, builder.build());
+    }
+
+
+    public String NotifyResult(Context context,String url, String JSON){
         NotificationManager notificationManager = (NotificationManager)  context.getSystemService(Context.NOTIFICATION_SERVICE);
 
 // Create a notification channel if targeting Android 8.0 or above
@@ -244,7 +277,7 @@ public class SmsListener extends BroadcastReceiver {
         return apiUrl;
     }
 
-    private byte[] getBitmapAsByteArray(Bitmap bitmap) {
+    public byte[] getBitmapAsByteArray(Bitmap bitmap) {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         bitmap.compress(Bitmap.CompressFormat.PNG, 0, outputStream);
         return outputStream.toByteArray();
@@ -270,7 +303,7 @@ public class SmsListener extends BroadcastReceiver {
         notificationManager.notify(NOTIFICATION_ID, builder.build());
     }
 
-    private String scanURL(Context context, String url) throws IOException {
+    public String scanURL(Context context, String url) throws IOException {
         OkHttpClient client = new OkHttpClient();
 
         MediaType mediaType = MediaType.parse("application/x-www-form-urlencoded");
@@ -344,7 +377,7 @@ public class SmsListener extends BroadcastReceiver {
         notificationManager.notify(7, builder.build());
     }
 
-    private String getAnalysis(String analysisId) throws IOException {
+    public String getAnalysis(String analysisId) throws IOException {
         if (analysisId == null || analysisId.isEmpty()) {
             Log.e("SmsListener", "No Analysis ID provided.");
             return null;
