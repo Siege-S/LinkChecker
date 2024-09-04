@@ -85,12 +85,20 @@ public class SettingsFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         Button btnAutoStart = view.findViewById(R.id.btnAutoStart);
+        Button btnNotification = view.findViewById(R.id.btnNotification);
         btnAutoStart.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 autoStartSettings();
             }
         });
+        btnNotification.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                openNotificationSettings();
+            }
+        });
+
 
         switchPermission = view.findViewById(R.id.switchPermission);
 
@@ -111,6 +119,22 @@ public class SettingsFragment extends Fragment {
                 }
             }
         });
+    }
+    private void openNotificationSettings() {
+        Intent intent = new Intent();
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            // For Android 8.0 and above
+            intent.setAction(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS);
+            intent.putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, getActivity().getPackageName());
+        } else {
+            // For versions below Android 8.0
+            intent.setAction(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+            intent.addCategory(Intent.CATEGORY_DEFAULT);
+            intent.setData(Uri.parse("package:" + getActivity().getPackageName()));
+        }
+
+        startActivity(intent);
     }
     private void openAppSettings() {
         Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);

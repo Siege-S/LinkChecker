@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/FragmentBackgroundColor"
+    android:background="#AA5500"
     tools:context=".MessageFragment">
 
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
