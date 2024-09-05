@@ -93,6 +93,7 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
         args.putString(ARG_PARAM2, param2);
         fragment.setArguments(args);
         return fragment;
+
     }
 
     @Override
@@ -125,17 +126,11 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
         super.onViewCreated(view, savedInstanceState);
         swipeRefreshLayout = view.findViewById(R.id.swipeRefreshLayout);
         recyclerView = view.findViewById(R.id.RV_Messages);
-        // Set LayoutManager with reverseLayout and stackFromEnd properties
-        LinearLayoutManager layoutManager = new LinearLayoutManager(getContext());
-        layoutManager.setReverseLayout(true);
-        layoutManager.setStackFromEnd(true);
-        recyclerView.setLayoutManager(layoutManager);
 
         adapter = new MyAdapter(getContext(), ID, Sender, URL,JSONResponse, imageURL, Date, this);
         recyclerView.setAdapter(adapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         displayData();
-
         ImageView internet = view.findViewById(R.id.IV_Internet);
         TextView txtInternet = view.findViewById(R.id.txtInternet);
 
@@ -162,18 +157,26 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
     private void displayData() {
         Cursor cursor = DB.getdata();
         TextView txtdata = getView().findViewById(R.id.txtdata);
+
+        // Clear previous data to prevent duplication
+        ID.clear();
+        Sender.clear();
+        URL.clear();
+        JSONResponse.clear();
+        imageURL.clear();
+        Date.clear();
+
         if (cursor.getCount() == 0) {
             txtdata.setText("No Data Found");
-//            Toast.makeText(getContext(), "No Data Found", Toast.LENGTH_SHORT).show();
         } else {
-            txtdata.setText("");
+            txtdata.setText("");  // Clear any previous text
             while (cursor.moveToNext()) { // Based on your Database column!!!
-                ID.add(cursor.getString(0));
-                Sender.add(cursor.getString(2));
-                URL.add(cursor.getString(1));
-                JSONResponse.add(cursor.getString(7));
-                imageURL.add(cursor.getBlob(6));
-                Date.add(cursor.getString(8));
+                ID.add(cursor.getString(0));           // Column 0: ID
+                Sender.add(cursor.getString(2));       // Column 2: Sender
+                URL.add(cursor.getString(1));          // Column 1: URL
+                JSONResponse.add(cursor.getString(7)); // Column 7: JSONResponse
+                imageURL.add(cursor.getBlob(6));       // Column 6: ImageURL
+                Date.add(cursor.getString(8));         // Column 8: Date
             }
         }
         adapter.notifyDataSetChanged();

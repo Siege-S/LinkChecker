@@ -62,6 +62,8 @@ public class SmsListener extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
+        DBHelper dbHelper = new DBHelper(context);
+        
         if (intent.getAction().equals("android.provider.Telephony.SMS_RECEIVED")) {
             Bundle bundle = intent.getExtras();
             SmsMessage[] msgs;
@@ -78,11 +80,11 @@ public class SmsListener extends BroadcastReceiver {
 
                             // List to store detected URLs
                             List<String> urls = new ArrayList<>();
-
+                            String detectedUrl = null;
                             Pattern URL_PATTERN = Patterns.WEB_URL; // Regular expression pattern to detect Web URLs
                             Matcher URL_MATCHER = URL_PATTERN.matcher(msgBody);
                             while (URL_MATCHER.find()) {
-                                String detectedUrl = URL_MATCHER.group();
+                                detectedUrl = URL_MATCHER.group();
                                 urls.add(detectedUrl);  // Add URL to list
                                 Toast.makeText(context, "URL Detected: " + detectedUrl, Toast.LENGTH_LONG).show();
                                 Log.v("URL", detectedUrl);
@@ -90,11 +92,19 @@ public class SmsListener extends BroadcastReceiver {
 
                             if(!MessageFragment.isInternetConnected(context)){
                                 Toast.makeText(context, "No Internet Connection", Toast.LENGTH_SHORT).show();
-                                noInternet(context, urls.toString());
+                                int notificationID = 0;
+                                for(String url : urls){
+                                    noInternet(context, url, notificationID);
+                                    notificationID++;
+                                    dbHelper.insertData(urls.toString(), msgBody, msg_from, null, null, null, null);
+                                }
+
                             } else {
                                 // Process each URL in the list
                                 for (String url : urls) {
-                                    createNotification(context, "URL Detected in SMS message", url);
+                                    int notifID = 0;
+                                    createNotification(context, "URL Detected in SMS message", url, notifID);
+                                    notifID++;
 
                                     String finalMsg_from = msg_from;
 
@@ -123,7 +133,6 @@ public class SmsListener extends BroadcastReceiver {
                                                         String analysis = NotifyResult(context, url, analysisResultJSON);
 
                                                         // Insert into database in SQLite
-                                                        DBHelper dbHelper = new DBHelper(context);
                                                         dbHelper.insertData(url, msgBody, finalMsg_from, apiUrl, analysis, image, analysisResultJSON);
                                                     });
                                                 } else {
@@ -283,7 +292,7 @@ public class SmsListener extends BroadcastReceiver {
         return outputStream.toByteArray();
     }
 
-    private void createNotification(Context context, String title, String url) {
+    private void createNotification(Context context, String title, String url, int notificationID) {
         NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
 
         // Create NotificationChannel for Android Oreo and higher
@@ -300,7 +309,7 @@ public class SmsListener extends BroadcastReceiver {
                 .setPriority(NotificationCompat.PRIORITY_HIGH);
 
         // Show the notification
-        notificationManager.notify(NOTIFICATION_ID, builder.build());
+        notificationManager.notify(notificationID, builder.build());
     }
 
     public String scanURL(Context context, String url) throws IOException {
@@ -357,7 +366,7 @@ public class SmsListener extends BroadcastReceiver {
         // Show the notification
         notificationManager.notify(6, builder.build());
     }
-    private void noInternet(Context context, String url) {
+    private void noInternet(Context context, String url, int notificationID) {
         NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
 
         // Create NotificationChannel for Android Oreo and higher
@@ -370,11 +379,11 @@ public class SmsListener extends BroadcastReceiver {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.mipmap.ic_launcher)
                 .setContentTitle("No Internet Connection")
-                .setContentText("Cannot process URL: " + url)
+                .setContentText("Cannot process detected URL: " + url)
                 .setPriority(NotificationCompat.PRIORITY_HIGH);
 
         // Show the notification
-        notificationManager.notify(7, builder.build());
+        notificationManager.notify(notificationID, builder.build());
     }
 
     public String getAnalysis(String analysisId) throws IOException {
