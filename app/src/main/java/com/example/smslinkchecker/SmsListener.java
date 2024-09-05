@@ -96,7 +96,7 @@ public class SmsListener extends BroadcastReceiver {
                                 for(String url : urls){
                                     noInternet(context, url, notificationID);
                                     notificationID++;
-                                    dbHelper.insertData(urls.toString(), msgBody, msg_from, null, null, null, null);
+//                                    dbHelper.insertData(urls.toString(), msgBody, msg_from, null, null, null, null);
                                 }
 
                             } else {
@@ -183,7 +183,7 @@ public class SmsListener extends BroadcastReceiver {
         );
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
-                .setSmallIcon(R.mipmap.ic_launcher)
+                .setSmallIcon(R.drawable.ic_notification)
                 .setContentTitle("Scan Failed")
                 .setContentText("Tap to retry scanning the URL.")
                 .addAction(R.drawable.retry, "Retry", retryPendingIntent)
@@ -209,26 +209,26 @@ public class SmsListener extends BroadcastReceiver {
 
         // Notification 1
         NotificationCompat.Builder builder1 = new NotificationCompat.Builder(context, CHANNEL_ID)
-                .setSmallIcon(R.mipmap.ic_launcher)
+                .setSmallIcon(R.drawable.ic_notification)
                 .setContentTitle("VirusTotal identified the URL as suspicious or a phishing threat.")
                 .setContentText("URL: "+url)
                 .setPriority(NotificationCompat.PRIORITY_HIGH);
 
         // Notification 2
         NotificationCompat.Builder builder2 = new NotificationCompat.Builder(context, CHANNEL_ID)
-                .setSmallIcon(R.mipmap.ic_launcher)
+                .setSmallIcon(R.drawable.ic_notification)
                 .setContentTitle("VirusTotal identified the URL as Malicious.")
                 .setContentText("URL: " + url)
                 .setPriority(NotificationCompat.PRIORITY_HIGH);
         // Notification 3
         NotificationCompat.Builder builder3 = new NotificationCompat.Builder(context, CHANNEL_ID)
-                .setSmallIcon(R.mipmap.ic_launcher)
+                .setSmallIcon(R.drawable.ic_notification)
                 .setContentTitle("VirusTotal identified the URL as both malicious and a phishing threat.")
                 .setContentText("URL: " + url)
                 .setPriority(NotificationCompat.PRIORITY_HIGH);
         // Notification 4
         NotificationCompat.Builder builder4 = new NotificationCompat.Builder(context, CHANNEL_ID)
-                .setSmallIcon(R.mipmap.ic_launcher)
+                .setSmallIcon(R.drawable.ic_notification)
                 .setContentTitle("VirusTotal report shows the URL is Harmless.")
                 .setContentText("URL: " + url)
                 .setPriority(NotificationCompat.PRIORITY_HIGH);
@@ -303,7 +303,7 @@ public class SmsListener extends BroadcastReceiver {
 
         // Build the notification
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
-                .setSmallIcon(R.mipmap.ic_launcher)
+                .setSmallIcon(R.drawable.ic_notification)
                 .setContentTitle(title)
                 .setContentText("Exercise caution and await the analysis of this URL: " + url)
                 .setPriority(NotificationCompat.PRIORITY_HIGH);
@@ -358,7 +358,7 @@ public class SmsListener extends BroadcastReceiver {
 
         // Build the notification
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
-                .setSmallIcon(R.mipmap.ic_launcher)
+                .setSmallIcon(R.drawable.ic_notification)
                 .setContentTitle("Error in Scanning URL")
                 .setContentText("URL: " + url)
                 .setPriority(NotificationCompat.PRIORITY_HIGH);
@@ -377,7 +377,7 @@ public class SmsListener extends BroadcastReceiver {
 
         // Build the notification
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
-                .setSmallIcon(R.mipmap.ic_launcher)
+                .setSmallIcon(R.drawable.ic_notification)
                 .setContentTitle("No Internet Connection")
                 .setContentText("Cannot process detected URL: " + url)
                 .setPriority(NotificationCompat.PRIORITY_HIGH);
