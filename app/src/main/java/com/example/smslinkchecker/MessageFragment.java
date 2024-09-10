@@ -1,13 +1,20 @@
 package com.example.smslinkchecker;
 
+import static android.R.layout.simple_spinner_item;
+
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
+
+import androidx.core.app.NotificationCompat;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.Build;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -18,18 +25,34 @@ import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.os.Handler;
+import android.os.Looper;
+import android.text.Layout;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -37,6 +60,7 @@ import java.util.ArrayList;
  * create an instance of this fragment.
  */
 public class MessageFragment extends Fragment implements RecyclerViewInterface {
+    private static final String CHANNEL_ID = "1001";
     @Override
     public void onItemClick(int position) {
         FragmentManager fragmentManager = getActivity().getSupportFragmentManager();
@@ -110,7 +134,6 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
         imageURL = new ArrayList<>();
         JSONResponse = new ArrayList<>();
         Date = new ArrayList<>();
-
     }
 
     @Override
@@ -124,24 +147,42 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        DBHelper dbHelper = new DBHelper(getContext());
         swipeRefreshLayout = view.findViewById(R.id.swipeRefreshLayout);
         recyclerView = view.findViewById(R.id.RV_Messages);
-
         adapter = new MyAdapter(getContext(), ID, Sender, URL,JSONResponse, imageURL, Date, this);
         recyclerView.setAdapter(adapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         displayData();
+
+
+
+
+        // Check internet connection
         ImageView internet = view.findViewById(R.id.IV_Internet);
         TextView txtInternet = view.findViewById(R.id.txtInternet);
-
+        View layoutOfflineProcess = view.findViewById(R.id.layoutOfflineProcess);
+        View layoutSpinnerButton = view.findViewById(R.id.layoutSpinnerButton);
+        TextView txtDetectedURL = view.findViewById(R.id.txtDetectedURL);
+        TextView txtProcessText = view.findViewById(R.id.txtProcessText);
+        txtProcessText.setVisibility(View.GONE);
+        int count = dbHelper.getOfflineDataCount();
+        txtDetectedURL.setText("When Offline LinkGuard Detected "+ count + " URL");
+        if(count == 0){
+            layoutSpinnerButton.setVisibility(View.GONE);
+        } else {
+            layoutSpinnerButton.setVisibility(View.VISIBLE);
+        }
         if (isInternetConnected(getContext())) {
             System.out.println("Internet Connected");
             internet.setVisibility(View.GONE);
             txtInternet.setVisibility(View.GONE);
+            layoutOfflineProcess.setVisibility(View.VISIBLE);
         } else {
             System.out.println("Internet Not Connected");
             internet.setVisibility(View.VISIBLE);
             txtInternet.setVisibility(View.VISIBLE);
+            layoutOfflineProcess.setVisibility(View.GONE);
         }
 
         // Set up the swipe-to-refresh
@@ -152,7 +193,86 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
             }
         });
 
+        // Offline Feature
+        Spinner spin_url = view.findViewById(R.id.spin_url);
+        Button btnScanOffline = view.findViewById(R.id.btnScanOffline);
+        // Fetch URLs from SQLite
+        ArrayList<String> offlineURL = dbHelper.getOfflineUrls();
+        // Create an ArrayAdapter with the retrieved URLs
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(getContext(), R.layout.spinner_item, offlineURL);
+        // Specify the layout for dropdown choices
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        // Set the adapter to the spinner
+        spin_url.setAdapter(adapter);
+
+        btnScanOffline.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Context context = getContext();
+                txtProcessText.setVisibility(View.VISIBLE);
+                processOfflineData(context);
+                Toast.makeText(getContext(), "Please wait while LinkGuard is processing the data", Toast.LENGTH_LONG).show();
+            }
+        });
     }
+
+    private void processOfflineData(Context context) {
+        DBHelper dbHelper = new DBHelper(getContext());
+        Cursor cursor = dbHelper.getOfflineData(); // Retrieve the cursor from your database helper
+        if (cursor != null && cursor.moveToFirst()) {
+            int urlIndex = cursor.getColumnIndex("url");
+            int senderIndex = cursor.getColumnIndex("sender");
+            int messageIndex = cursor.getColumnIndex("message");
+            int idIndex = cursor.getColumnIndex("id"); // Assuming you have an 'id' column for unique identification
+
+            if (urlIndex != -1 && idIndex != -1) {
+                do {
+                    SmsListener smsListener = new SmsListener();
+
+                    String url = cursor.getString(urlIndex);
+                    String sender = cursor.getString(senderIndex);
+                    String message = cursor.getString(messageIndex);
+                    int id = cursor.getInt(idIndex); // Get the unique ID of the record
+
+                    // Process the data asynchronously
+                    ExecutorService executorService = Executors.newSingleThreadExecutor();
+                    executorService.execute(() -> {
+                        try {
+                            String apiUrl = smsListener.SnapshotmachineAPI(url);
+                            String analysisId = smsListener.scanURL(getContext(), url);
+
+                            if (analysisId != null) {
+                                String analysisResultJSON = smsListener.getAnalysis(analysisId);
+
+                                if (analysisResultJSON != null) {
+                                    InputStream in = new URL(apiUrl).openStream();
+                                    Bitmap bitmap = BitmapFactory.decodeStream(in);
+                                    byte[] image = smsListener.getBitmapAsByteArray(bitmap);
+
+                                    new Handler(Looper.getMainLooper()).post(() -> {
+                                        String analysis = NotifyResultURL(context, url, analysisResultJSON);
+                                        dbHelper.insertData(url, sender ,message, apiUrl, analysis, image, analysisResultJSON);
+
+                                        // After processing, delete the record by its ID
+                                        dbHelper.deleteRecordById(id);
+                                    });
+                                }
+                            }
+                        } catch (IOException | NoSuchAlgorithmException e) {
+                            Log.e("SmsListener", "Error: " + e.getMessage());
+                        } finally {
+                            executorService.shutdown();
+                        }
+                    });
+                } while (cursor.moveToNext());
+            }
+
+            cursor.close(); // Close the cursor when done
+        } else {
+            Log.e("Error", "Cursor is null or empty");
+        }
+    }
+
 
     private void displayData() {
         Cursor cursor = DB.getdata();
@@ -206,6 +326,79 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
         }
 
         return false;
+    }
+
+    private String NotifyResultURL(Context context, String url, String JSON) {
+        if (context == null) {
+            Log.e("NotifyResultURL", "Context is null");
+            return "Failed to send notification: context is null";
+        }
+
+        NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        if (notificationManager == null) {
+            Log.e("NotifyResultURL", "NotificationManager is null");
+            return "Failed to send notification: NotificationManager is null";
+        }
+
+        // Create a notification channel if targeting Android 8.0 or above
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(
+                    CHANNEL_ID,
+                    "SMS Channel",
+                    NotificationManager.IMPORTANCE_DEFAULT);
+            notificationManager.createNotificationChannel(channel);
+        }
+
+        // Create notifications
+        NotificationCompat.Builder builder1 = new NotificationCompat.Builder(context, CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_notification)
+                .setContentTitle("VirusTotal identified the URL as suspicious or a phishing threat.")
+                .setContentText("URL: " + url)
+                .setPriority(NotificationCompat.PRIORITY_HIGH);
+
+        NotificationCompat.Builder builder2 = new NotificationCompat.Builder(context, CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_notification)
+                .setContentTitle("VirusTotal identified the URL as Malicious.")
+                .setContentText("URL: " + url)
+                .setPriority(NotificationCompat.PRIORITY_HIGH);
+
+        NotificationCompat.Builder builder3 = new NotificationCompat.Builder(context, CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_notification)
+                .setContentTitle("VirusTotal identified the URL as both malicious and a phishing threat.")
+                .setContentText("URL: " + url)
+                .setPriority(NotificationCompat.PRIORITY_HIGH);
+
+        NotificationCompat.Builder builder4 = new NotificationCompat.Builder(context, CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_notification)
+                .setContentTitle("VirusTotal report shows the URL is Harmless.")
+                .setContentText("URL: " + url)
+                .setPriority(NotificationCompat.PRIORITY_HIGH);
+
+        try {
+            JSONObject jsonObject = new JSONObject(JSON);
+
+            int malicious = jsonObject.getJSONObject("data").getJSONObject("attributes").getJSONObject("stats").getInt("malicious");
+            int suspicious = jsonObject.getJSONObject("data").getJSONObject("attributes").getJSONObject("stats").getInt("suspicious");
+            int harmless = jsonObject.getJSONObject("data").getJSONObject("attributes").getJSONObject("stats").getInt("harmless");
+
+            if (malicious > 0 && suspicious > 0) {
+                notificationManager.notify(3, builder3.build()); // Notification ID 3
+                return "VirusTotal identified the URL as both malicious and a phishing threat";
+            } else if (malicious > 0) {
+                notificationManager.notify(2, builder2.build()); // Notification ID 2
+                return "VirusTotal identified the URL as Malicious";
+            } else if (suspicious > 0) {
+                notificationManager.notify(1, builder1.build()); // Notification ID 1
+                return "VirusTotal identified the URL as suspicious or a phishing threat";
+            } else {
+                notificationManager.notify(4, builder4.build()); // Notification ID 4
+                return "VirusTotal report shows the URL is Harmless";
+            }
+
+        } catch (JSONException e) {
+            Log.e("NotifyResultURL", "JSON parsing error", e);
+            return "Failed to process JSON data";
+        }
     }
 
 }

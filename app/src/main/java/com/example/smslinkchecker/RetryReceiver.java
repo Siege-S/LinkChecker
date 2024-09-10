@@ -53,7 +53,7 @@ public class RetryReceiver extends BroadcastReceiver {
 
                                 // Insert into database in SQLite
                                 DBHelper dbHelper = new DBHelper(context);
-                                dbHelper.insertData(url, message, sender, apiUrl, analysis, image, analysisResultJSON);
+                                dbHelper.insertData(url, sender , message, apiUrl, analysis, image, analysisResultJSON);
                             });
                         } else {
                             smsListener.showRetryNotification(context, url, message, sender);

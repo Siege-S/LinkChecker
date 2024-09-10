@@ -94,9 +94,11 @@ public class SmsListener extends BroadcastReceiver {
                                 Toast.makeText(context, "No Internet Connection", Toast.LENGTH_SHORT).show();
                                 int notificationID = 0;
                                 for(String url : urls){
-                                    noInternet(context, url, notificationID);
                                     notificationID++;
-//                                    dbHelper.insertData(urls.toString(), msgBody, msg_from, null, null, null, null);
+                                    if (dbHelper.insertOfflineTbl(url, msg_from, msgBody)) {
+                                        noInternet(context, url, notificationID);
+                                    }
+
                                 }
 
                             } else {
@@ -133,7 +135,7 @@ public class SmsListener extends BroadcastReceiver {
                                                         String analysis = NotifyResult(context, url, analysisResultJSON);
 
                                                         // Insert into database in SQLite
-                                                        dbHelper.insertData(url, msgBody, finalMsg_from, apiUrl, analysis, image, analysisResultJSON);
+                                                        dbHelper.insertData(url, finalMsg_from, msgBody, apiUrl, analysis, image, analysisResultJSON);
                                                     });
                                                 } else {
                                                     showRetryNotification(context, url, msgBody, finalMsg_from);
@@ -277,7 +279,7 @@ public class SmsListener extends BroadcastReceiver {
         options.put("device", "desktop");
         options.put("format", "png");
         options.put("cacheLimit", "0");
-        options.put("delay", "10000");
+        options.put("delay", "10000"); // 10 seconds
         options.put("zoom", "100");
 
         String apiUrl = sm.generateScreenshotApiUrl(options);
@@ -379,7 +381,7 @@ public class SmsListener extends BroadcastReceiver {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_notification)
                 .setContentTitle("No Internet Connection")
-                .setContentText("Cannot process detected URL: " + url)
+                .setContentText("URL is saved for later analysis: " + url)
                 .setPriority(NotificationCompat.PRIORITY_HIGH);
 
         // Show the notification
