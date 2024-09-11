@@ -63,55 +63,52 @@ public class SmsListener extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         DBHelper dbHelper = new DBHelper(context);
-        
+
         if (intent.getAction().equals("android.provider.Telephony.SMS_RECEIVED")) {
             Bundle bundle = intent.getExtras();
             SmsMessage[] msgs;
             String msg_from;
             if (bundle != null) {
-                    try {
-                        Object[] pdus = (Object[]) bundle.get("pdus");
-                        msgs = new SmsMessage[pdus.length];
-                        for (int i = 0; i < msgs.length; i++) {
-                            msgs[i] = SmsMessage.createFromPdu((byte[]) pdus[i]);
-                            msg_from = msgs[i].getOriginatingAddress();
-                            String msgBody = msgs[i].getMessageBody();
-                            Log.v("URLs", "From: " + msg_from + " , Body: " + msgBody);
+                try {
+                    Object[] pdus = (Object[]) bundle.get("pdus");
+                    msgs = new SmsMessage[pdus.length];
+                    for (int i = 0; i < msgs.length; i++) {
+                        msgs[i] = SmsMessage.createFromPdu((byte[]) pdus[i]);
+                        msg_from = msgs[i].getOriginatingAddress();
+                        String msgBody = msgs[i].getMessageBody();
+                        Log.v("URLs", "From: " + msg_from + " , Body: " + msgBody);
 
-                            // List to store detected URLs
-                            List<String> urls = new ArrayList<>();
-                            String detectedUrl = null;
-                            Pattern URL_PATTERN = Patterns.WEB_URL; // Regular expression pattern to detect Web URLs
-                            Matcher URL_MATCHER = URL_PATTERN.matcher(msgBody);
-                            while (URL_MATCHER.find()) {
-                                detectedUrl = URL_MATCHER.group();
-                                urls.add(detectedUrl);  // Add URL to list
-                                Toast.makeText(context, "URL Detected: " + detectedUrl, Toast.LENGTH_LONG).show();
-                                Log.v("URL", detectedUrl);
-                            }
+                        // List to store detected URLs
+                        List<String> urls = new ArrayList<>();
+                        String detectedUrl;
+                        Pattern URL_PATTERN = Patterns.WEB_URL; // Regular expression pattern to detect Web URLs
+                        Matcher URL_MATCHER = URL_PATTERN.matcher(msgBody);
+                        while (URL_MATCHER.find()) {
+                            detectedUrl = URL_MATCHER.group();
+                            urls.add(detectedUrl);  // Add URL to list
+                            Toast.makeText(context, "URL Detected: " + detectedUrl, Toast.LENGTH_LONG).show();
+                            Log.v("URL", detectedUrl);
+                        }
 
-                            if(!MessageFragment.isInternetConnected(context)){
-                                Toast.makeText(context, "No Internet Connection", Toast.LENGTH_SHORT).show();
-                                int notificationID = 0;
-                                for(String url : urls){
-                                    notificationID++;
-                                    if (dbHelper.insertOfflineTbl(url, msg_from, msgBody)) {
-                                        noInternet(context, url, notificationID);
-                                    }
-
+                        if (!MessageFragment.isInternetConnected(context)) {
+                            Toast.makeText(context, "No Internet Connection", Toast.LENGTH_SHORT).show();
+                            int notificationID = 0;
+                            for (String url : urls) {
+                                notificationID++;
+                                if (dbHelper.insertOfflineTbl(url, msg_from, msgBody)) {
+                                    noInternet(context, url, notificationID);
                                 }
-
-                            } else {
+                            }
+                        } else {
+                            // Create a single ExecutorService for processing URLs
+                            ExecutorService executorService = Executors.newSingleThreadExecutor();
+                            try {
                                 // Process each URL in the list
                                 for (String url : urls) {
                                     int notifID = 0;
                                     createNotification(context, "URL Detected in SMS message", url, notifID);
                                     notifID++;
-
                                     String finalMsg_from = msg_from;
-
-                                    // Scan Detected URL and Get Analysis Result using VirusTotal API
-                                    ExecutorService executorService = Executors.newSingleThreadExecutor();
                                     executorService.execute(() -> {
                                         try {
                                             // Method Call API return API URL
@@ -139,36 +136,34 @@ public class SmsListener extends BroadcastReceiver {
                                                     });
                                                 } else {
                                                     showRetryNotification(context, url, msgBody, finalMsg_from);
-                                                    Log.v("GetAnalysis", "Failed to get analysis result.");
                                                     System.out.println("Failed to get analysis result.");
                                                 }
                                             } else {
                                                 showRetryNotification(context, url, msgBody, finalMsg_from);
-                                                Log.v("ScanURL", "Failed to scan URL.");
                                                 System.out.println("Failed to scan URL.");
                                             }
                                         } catch (IOException e) {
-                                            Log.v("SmsListener", "Error in VirusTotal: " + e.getMessage());
+                                            System.out.println("Error in VirusTotal:" + e.getMessage());
                                             showRetryNotification(context, url, msgBody, finalMsg_from);
                                             e.printStackTrace();
                                         } catch (NoSuchAlgorithmException e) {
                                             throw new RuntimeException(e);
-                                        } finally {
-                                            // Shutdown the executor service
-                                            executorService.shutdown();
                                         }
                                     });
-
                                 }
+                            } finally {
+                                // Shutdown the executor service after all tasks are submitted
+                                executorService.shutdown();
                             }
-
                         }
-                    } catch (Exception e) {
-                        e.printStackTrace();
                     }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
+
 
     public void showRetryNotification(Context context, String url, String sender, String message) {
         Intent retryIntent = new Intent(context, RetryReceiver.class);
@@ -193,12 +188,13 @@ public class SmsListener extends BroadcastReceiver {
                 .setAutoCancel(true);
 
         NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        notificationManager.notify(NOTIFICATION_ID, builder.build());
+        notificationManager.notify(100, builder.build());
     }
 
 
     public String NotifyResult(Context context,String url, String JSON){
         NotificationManager notificationManager = (NotificationManager)  context.getSystemService(Context.NOTIFICATION_SERVICE);
+
 
 // Create a notification channel if targeting Android 8.0 or above
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -209,31 +205,51 @@ public class SmsListener extends BroadcastReceiver {
             notificationManager.createNotificationChannel(channel);
         }
 
+        // Create an Intent to open your main Activity when the notification is clicked
+        Intent intent = new Intent(context, MainActivity.class); // Replace with your main activity
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP); // Ensure app is brought to foreground
+
+        // Wrap the Intent in a PendingIntent with FLAG_IMMUTABLE
+        PendingIntent pendingIntent = PendingIntent.getActivity(
+                context,
+                0, // requestCode
+                intent,
+                PendingIntent.FLAG_IMMUTABLE // Required for Android 12+
+        );
+
         // Notification 1
         NotificationCompat.Builder builder1 = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_notification)
                 .setContentTitle("VirusTotal identified the URL as suspicious or a phishing threat.")
                 .setContentText("URL: "+url)
-                .setPriority(NotificationCompat.PRIORITY_HIGH);
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setAutoCancel(true) // Dismiss the notification when clicked
+                .setContentIntent(pendingIntent); // Set the intent that will fire when the user taps the notification
 
         // Notification 2
         NotificationCompat.Builder builder2 = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_notification)
                 .setContentTitle("VirusTotal identified the URL as Malicious.")
                 .setContentText("URL: " + url)
-                .setPriority(NotificationCompat.PRIORITY_HIGH);
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setAutoCancel(true) // Dismiss the notification when clicked
+                .setContentIntent(pendingIntent); // Set the intent that will fire when the user taps the notification
         // Notification 3
         NotificationCompat.Builder builder3 = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_notification)
                 .setContentTitle("VirusTotal identified the URL as both malicious and a phishing threat.")
                 .setContentText("URL: " + url)
-                .setPriority(NotificationCompat.PRIORITY_HIGH);
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setAutoCancel(true) // Dismiss the notification when clicked
+                .setContentIntent(pendingIntent); // Set the intent that will fire when the user taps the notification
         // Notification 4
         NotificationCompat.Builder builder4 = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_notification)
                 .setContentTitle("VirusTotal report shows the URL is Harmless.")
                 .setContentText("URL: " + url)
-                .setPriority(NotificationCompat.PRIORITY_HIGH);
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setAutoCancel(true) // Dismiss the notification when clicked
+                .setContentIntent(pendingIntent); // Set the intent that will fire when the user taps the notification
 
         try {
             JSONObject jsonObject = new JSONObject(JSON);
@@ -303,12 +319,26 @@ public class SmsListener extends BroadcastReceiver {
             notificationManager.createNotificationChannel(channel);
         }
 
+        // Create an Intent to open your main Activity when the notification is clicked
+        Intent intent = new Intent(context, MainActivity.class); // Replace with your main activity
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP); // Ensure app is brought to foreground
+
+        // Wrap the Intent in a PendingIntent with FLAG_IMMUTABLE
+        PendingIntent pendingIntent = PendingIntent.getActivity(
+                context,
+                0, // requestCode
+                intent,
+                PendingIntent.FLAG_IMMUTABLE // Required for Android 12+
+        );
+
         // Build the notification
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_notification)
                 .setContentTitle(title)
                 .setContentText("Exercise caution and await the analysis of this URL: " + url)
-                .setPriority(NotificationCompat.PRIORITY_HIGH);
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setAutoCancel(true) // Dismiss the notification when clicked
+                .setContentIntent(pendingIntent); // Set the intent that will fire when the user taps the notification
 
         // Show the notification
         notificationManager.notify(notificationID, builder.build());
@@ -410,6 +440,7 @@ public class SmsListener extends BroadcastReceiver {
 
                 String responseBody = response.body().string();
                 Log.d("SmsListener", "getAnalysis Response: " + responseBody);
+                System.out.println("Response received: " + responseBody);
 
                 JSONObject jsonResponse = new JSONObject(responseBody);
                 JSONObject attributes = jsonResponse.getJSONObject("data").getJSONObject("attributes");
