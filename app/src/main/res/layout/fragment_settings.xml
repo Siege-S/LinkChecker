@@ -35,14 +35,29 @@
             android:textColor="@color/Unselected"
             android:textSize="40sp" />
 
-        <TextView
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="20dp"
-            android:fontFamily="@font/poppins_semibold"
-            android:text="Manage app permissions"
-            android:textColor="@color/Unselected"
-            android:textSize="16sp" />
+            android:paddingHorizontal="20dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:fontFamily="@font/poppins_semibold"
+                android:text="Manage app permissions"
+                android:textColor="@color/Unselected"
+                android:textSize="16sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/poppins_semibold"
+                android:text="Ver.4"
+                android:textColor="#D7D7D7"
+                android:textSize="16sp" />
+        </LinearLayout>
+
     </LinearLayout>
 
     <LinearLayout

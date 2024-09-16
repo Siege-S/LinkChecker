@@ -32,6 +32,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -51,6 +52,7 @@ import java.io.InputStream;
 import java.net.URL;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -196,6 +198,7 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
         // Offline Feature
         Spinner spin_url = view.findViewById(R.id.spin_url);
         Button btnScanOffline = view.findViewById(R.id.btnScanOffline);
+        Button btnRemoveItem = view.findViewById(R.id.btnRemoveItem);
         // Fetch URLs from SQLite
         ArrayList<String> offlineURL = dbHelper.getOfflineUrls();
         // Create an ArrayAdapter with the retrieved URLs
@@ -204,6 +207,44 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         // Set the adapter to the spinner
         spin_url.setAdapter(adapter);
+
+        spin_url.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
+                // Get the selected item
+                String selectedItem = parentView.getItemAtPosition(position).toString();
+                btnRemoveItem.setOnClickListener(new View.OnClickListener() {
+
+                    @Override
+                    public void onClick(View v) {
+                        // Delete the selected item from the database
+                        dbHelper.deleteRecordByURL(selectedItem);
+
+                        // Reload the Spinner data after deletion
+                        List<String> updatedUrls = dbHelper.getOfflineUrls(); // Implement this to fetch URLs again
+                        ArrayAdapter<String> newAdapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item, updatedUrls);
+                        newAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                        int count = dbHelper.getOfflineDataCount();
+                        txtDetectedURL.setText("When Offline LinkGuard Detected "+ count + " URL");
+                        if(count == 0){
+                            layoutSpinnerButton.setVisibility(View.GONE);
+                        } else {
+                            layoutSpinnerButton.setVisibility(View.VISIBLE);
+                        }
+
+                        // Set the updated adapter to the Spinner
+                        spin_url.setAdapter(newAdapter);
+
+                        Toast.makeText(getContext(), selectedItem + " Deleted", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parentView) {
+                // Handle if no item is selected
+            }
+        });
 
         btnScanOffline.setOnClickListener(new View.OnClickListener() {
             @Override

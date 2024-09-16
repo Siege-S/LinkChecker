@@ -36,6 +36,12 @@ public class DBHelper extends SQLiteOpenHelper {
         }
         onCreate(db);
     }
+    public void deleteRecordByURL(String url) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        // Use the correct column name for the URL (assuming it's called "url" in the database)
+        db.delete("urlOfflineTbl", "url = ?", new String[]{url});
+        db.close();
+    }
 
     public void deleteRecordById(int id) {
         SQLiteDatabase db = this.getWritableDatabase();
@@ -155,5 +161,6 @@ public class DBHelper extends SQLiteOpenHelper {
         db.delete("urlmessagestbl", "id=?", new String[]{String.valueOf(id)});
         db.close();
     }
+
 
 }

@@ -60,6 +60,12 @@
                         android:layout_height="wrap_content"
                         android:text="Scan All" />
 
+                    <Button
+                        android:id="@+id/btnRemoveItem"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Remove Item" />
+
                 </LinearLayout>
 
                 <TextView
