@@ -47,9 +47,9 @@ public class MainActivity extends AppCompatActivity {
             else if (itemId == R.id.messages) {// Handle messages action
                 replaceFragment(new MessageFragment());
             }
-            else if (itemId == R.id.contacts) {// Handle contacts action
-                replaceFragment(new ContactFragment());
-            }
+//            else if (itemId == R.id.contacts) {// Handle contacts action
+//                replaceFragment(new GuideFragment());
+//            }
             else if (itemId == R.id.settings) {// Handle settings action
                 replaceFragment(new SettingsFragment());
             }

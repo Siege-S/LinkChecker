@@ -26,8 +26,10 @@ import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -344,11 +346,18 @@ public class SmsListener extends BroadcastReceiver {
         notificationManager.notify(notificationID, builder.build());
     }
 
+    private static final int MAX_RETRIES = 3; // Number of retries
+
     public String scanURL(Context context, String url) throws IOException {
-        OkHttpClient client = new OkHttpClient();
+        OkHttpClient client = new OkHttpClient.Builder()
+                .connectTimeout(30, TimeUnit.SECONDS)
+                .writeTimeout(30, TimeUnit.SECONDS)
+                .readTimeout(30, TimeUnit.SECONDS)
+                .build();
 
         MediaType mediaType = MediaType.parse("application/x-www-form-urlencoded");
-        RequestBody body = RequestBody.create(mediaType, "url=" + url);
+        String encodedUrl = URLEncoder.encode(url, "UTF-8");
+        RequestBody body = RequestBody.create(mediaType, "url=" + encodedUrl);
         Request request = new Request.Builder()
                 .url("https://www.virustotal.com/api/v3/urls")
                 .post(body)
@@ -357,27 +366,44 @@ public class SmsListener extends BroadcastReceiver {
                 .addHeader("content-type", "application/x-www-form-urlencoded")
                 .build();
 
-        try (Response response = client.newCall(request).execute()) {
-            if (!response.isSuccessful()) {
-                Log.v("ScanURL", "Unexpected code " + response);
-                throw new IOException("Unexpected code " + response);
+        int retryCount = 0;
+        while (retryCount < MAX_RETRIES) {
+            try (Response response = client.newCall(request).execute()) {
+                if (!response.isSuccessful()) {
+                    Log.e("ScanURL", "Request failed with code: " + response.code() + " - " + response.message());
+                    System.out.println("Scan URL Error: " + response.code() + " - " + response.message());
+                    throw new IOException("Unexpected code " + response);
+                }
+
+                String responseBody = response.body().string();
+                Log.d("ScanURL", "Response received: " + responseBody);
+                System.out.println("Scan URL Response: " + responseBody);
+
+                JSONObject jsonResponse = new JSONObject(responseBody);
+                return jsonResponse.getJSONObject("data").getString("id");
+
+            } catch (IOException | JSONException e) {
+                Log.e("ScanURL", "Error in scanURL attempt " + retryCount + ": " + e.getMessage());
+                e.printStackTrace();
+
+                retryCount++;
+                if (retryCount >= MAX_RETRIES) {
+                    invalidURL(context, url); // Handle the failure after max retries
+                    return null;
+                }
+
+                try {
+                    // Wait before retrying (you can adjust the interval as needed)
+                    Thread.sleep(2000); // Wait for 2 seconds before retrying
+                } catch (InterruptedException interruptedException) {
+                    Thread.currentThread().interrupt();
+                    return null;
+                }
             }
-
-            // Handle the response here
-            String responseBody = response.body().string();
-            System.out.println("Response received: " + responseBody);
-
-            // response is JSON, you can parse it to extract the analysis ID
-            JSONObject jsonResponse = new JSONObject(responseBody);
-            return jsonResponse.getJSONObject("data").getString("id");
-
-        } catch (IOException | JSONException e) {
-            Log.v("ScanURL", "Error in scanURL: " + e.getMessage());
-            invalidURL(context, url);
-            e.printStackTrace();
-            return null;
         }
+        return null;
     }
+
 
     private void invalidURL(Context context, String url) {
         NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
@@ -440,7 +466,7 @@ public class SmsListener extends BroadcastReceiver {
 
                 String responseBody = response.body().string();
                 Log.d("SmsListener", "getAnalysis Response: " + responseBody);
-                System.out.println("Response received: " + responseBody);
+                System.out.println("Get Analysis Response received: " + responseBody);
 
                 JSONObject jsonResponse = new JSONObject(responseBody);
                 JSONObject attributes = jsonResponse.getJSONObject("data").getJSONObject("attributes");
