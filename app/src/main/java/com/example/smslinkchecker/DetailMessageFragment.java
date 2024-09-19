@@ -136,12 +136,12 @@ public class DetailMessageFragment extends Fragment {
             txtstatus.setText(status);
 
             if(malicious > 0 && suspicious > 0){
-                txtanalysis.setText("VirusTotal identified the URL as both malicious and a phishing threat");
+                txtanalysis.setText("VirusTotal identified the URL as both malicious and suspicious");
                 txtanalysis.setTextColor(getResources().getColor(R.color.red));
                 IV_analysis.setImageResource(R.drawable.warning_red);
 
             } else if (suspicious > 0) {
-                txtanalysis.setText("VirusTotal identified the URL as suspicious or a phishing threat");
+                txtanalysis.setText("VirusTotal identified the URL as suspicious");
                 txtanalysis.setTextColor(getResources().getColor(R.color.red));
                 IV_analysis.setImageResource(R.drawable.warning_red);
             } else if (malicious > 0) {

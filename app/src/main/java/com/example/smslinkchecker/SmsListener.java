@@ -57,7 +57,7 @@ import org.json.JSONObject;
 public class SmsListener extends BroadcastReceiver {
     private static final String CHANNEL_ID = "1001";
     private static final int NOTIFICATION_ID = 123;
-
+    public String customerKey = "99acf"; // 99acf // e83172
     private static final String API_KEY = "d2a66c9f38303515894f1721ed3aaf695f9ec0eb6ab81c000ef3b4aa228bad94";
 
     private static final int POLLING_INTERVAL_MS = 10000; // 10 seconds
@@ -222,7 +222,7 @@ public class SmsListener extends BroadcastReceiver {
         // Notification 1
         NotificationCompat.Builder builder1 = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_notification)
-                .setContentTitle("VirusTotal identified the URL as suspicious or a phishing threat.")
+                .setContentTitle("LinkGuard identified the URL as suspicious or a phishing threat.")
                 .setContentText("URL: "+url)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setAutoCancel(true) // Dismiss the notification when clicked
@@ -231,7 +231,7 @@ public class SmsListener extends BroadcastReceiver {
         // Notification 2
         NotificationCompat.Builder builder2 = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_notification)
-                .setContentTitle("VirusTotal identified the URL as Malicious.")
+                .setContentTitle("LinkGuard identified the URL as Malicious.")
                 .setContentText("URL: " + url)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setAutoCancel(true) // Dismiss the notification when clicked
@@ -239,7 +239,7 @@ public class SmsListener extends BroadcastReceiver {
         // Notification 3
         NotificationCompat.Builder builder3 = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_notification)
-                .setContentTitle("VirusTotal identified the URL as both malicious and a phishing threat.")
+                .setContentTitle("LinkGuard identified the URL as both malicious and a phishing threat.")
                 .setContentText("URL: " + url)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setAutoCancel(true) // Dismiss the notification when clicked
@@ -247,7 +247,7 @@ public class SmsListener extends BroadcastReceiver {
         // Notification 4
         NotificationCompat.Builder builder4 = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_notification)
-                .setContentTitle("VirusTotal report shows the URL is Harmless.")
+                .setContentTitle("LinkGuard report shows the URL is Harmless.")
                 .setContentText("URL: " + url)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setAutoCancel(true) // Dismiss the notification when clicked
@@ -260,24 +260,24 @@ public class SmsListener extends BroadcastReceiver {
             int suspicious = jsonObject.getJSONObject("data").getJSONObject("attributes").getJSONObject("stats").getInt("suspicious");
             int harmless = jsonObject.getJSONObject("data").getJSONObject("attributes").getJSONObject("stats").getInt("harmless");
 
-            if(malicious > 0 && suspicious > 0){
+            if(malicious > 0 && suspicious > 0){ // 3 if malicious and suspicious
                 notificationManager.notify(3, builder3.build()); // Notification ID 3
                 System.out.println("Link is Malicious and Suspicious" + url);
-                return "VirusTotal identified the URL as both malicious and a phishing threat";
+                return "3";
             }
-            else if(malicious > 0){
+            else if(malicious > 0){ // 1 if malicious
                 notificationManager.notify(2, builder2.build()); // Notification ID 2
                 System.out.println("Link is Malicious" + url);
-                return "VirusTotal identified the URL as Malicious";
+                return "1";
             }
-            else if(suspicious > 0){
+            else if(suspicious > 0){ // 2 if suspicious
                 notificationManager.notify(1, builder1.build()); // Notification ID 1
                 System.out.println("Link is Suspicious/Phishing" + url);
-                return "VirusTotal identified the URL as suspicious or a phishing threat";
+                return "2";
             }
-            else {
+            else { // 0 if harmless
                 notificationManager.notify(4, builder4.build()); // Notification ID 4
-                return "VirusTotal report shows the URL is Harmless";
+                return "0";
             }
 
         } catch (JSONException e) {
@@ -287,9 +287,7 @@ public class SmsListener extends BroadcastReceiver {
 
     public String SnapshotmachineAPI(String url) throws UnsupportedEncodingException, NoSuchAlgorithmException {
         // Call ScreenshotMachine API
-        String customerKey = "990acf";
         String secretPhrase = ""; // leave secret phrase empty if not needed
-
         ScreenshoMachine sm = new ScreenshoMachine(customerKey, secretPhrase);
         Map<String, String> options = new HashMap<>();
         options.put("url", url);
@@ -349,12 +347,7 @@ public class SmsListener extends BroadcastReceiver {
     private static final int MAX_RETRIES = 3; // Number of retries
 
     public String scanURL(Context context, String url) throws IOException {
-        OkHttpClient client = new OkHttpClient.Builder()
-                .connectTimeout(30, TimeUnit.SECONDS)
-                .writeTimeout(30, TimeUnit.SECONDS)
-                .readTimeout(30, TimeUnit.SECONDS)
-                .build();
-
+        OkHttpClient client = new OkHttpClient();
         MediaType mediaType = MediaType.parse("application/x-www-form-urlencoded");
         String encodedUrl = URLEncoder.encode(url, "UTF-8");
         RequestBody body = RequestBody.create(mediaType, "url=" + encodedUrl);
@@ -394,7 +387,7 @@ public class SmsListener extends BroadcastReceiver {
 
                 try {
                     // Wait before retrying (you can adjust the interval as needed)
-                    Thread.sleep(2000); // Wait for 2 seconds before retrying
+                    Thread.sleep(2000); // 2 seconds delay before retrying
                 } catch (InterruptedException interruptedException) {
                     Thread.currentThread().interrupt();
                     return null;

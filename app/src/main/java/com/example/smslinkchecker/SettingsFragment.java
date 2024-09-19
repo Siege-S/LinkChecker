@@ -149,9 +149,7 @@ public class SettingsFragment extends Fragment {
 
         if ("xiaomi".equalsIgnoreCase(manufacturer)) {
             intent.setComponent(new ComponentName("com.miui.securitycenter", "com.miui.permcenter.autostart.AutoStartManagementActivity"));
-        } else if ("oppo".equalsIgnoreCase(manufacturer)) {
-            intent.setComponent(new ComponentName("com.coloros.safecenter", "com.coloros.safecenter.permission.startup.StartupAppListActivity"));
-        } else if ("vivo".equalsIgnoreCase(manufacturer)) {
+        }  else if ("vivo".equalsIgnoreCase(manufacturer)) {
             intent.setComponent(new ComponentName("com.vivo.permissionmanager", "com.vivo.permissionmanager.activity.BgStartUpManagerActivity"));
         } else if ("letv".equalsIgnoreCase(manufacturer)) {
             intent.setComponent(new ComponentName("com.letv.android.letvsafe", "com.letv.android.letvsafe.AutobootManageActivity"));
@@ -159,7 +157,7 @@ public class SettingsFragment extends Fragment {
             intent.setComponent(new ComponentName("com.huawei.systemmanager", "com.huawei.systemmanager.optimize.process.ProtectActivity"));
         } else {
             // Fallback message for other manufacturers
-            Toast.makeText(getContext(), "Please enable Auto-start in the device settings manually.", Toast.LENGTH_LONG).show();
+            Toast.makeText(getContext(), "Settings>>Manage Apps>>Auto-Start>>LinkGuard", Toast.LENGTH_LONG).show();
         }
 
         if (intent.resolveActivity(getContext().getPackageManager()) != null) {

@@ -10,11 +10,12 @@ import android.util.Log;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 public class DBHelper extends SQLiteOpenHelper {
     public static final String DATABASE_NAME = "linkGuard.db";
-    public static final int DATABASE_VERSION = 2;
+    public static final int DATABASE_VERSION = 3;
 
     public DBHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -155,6 +156,45 @@ public class DBHelper extends SQLiteOpenHelper {
         Cursor cursor = DB.rawQuery("SELECT * FROM urlmessagestbl ORDER BY timestamp DESC", null);
         return cursor;
     }
+    public Cursor getRecentRecords(){
+        SQLiteDatabase DB = this.getReadableDatabase();
+        Cursor cursor = DB.rawQuery("SELECT * FROM urlmessagestbl ORDER BY timestamp DESC", null);
+        return cursor;
+    }
+    public Cursor getFilteredData(String dateSortOrder, String resultFilter) {
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        // Base query with optional result filter
+        StringBuilder queryBuilder = new StringBuilder("SELECT * FROM urlmessagestbl");
+        List<String> selectionArgs = new ArrayList<>();
+
+        if (!resultFilter.equals("All")) {
+            queryBuilder.append(" WHERE analysis = ?");
+            selectionArgs.add(resultFilter);
+        }
+
+        // Append sorting logic
+        if (dateSortOrder.equals("Recent")) {
+            queryBuilder.append(" ORDER BY timestamp DESC");  // Most recent records first
+        } else if (dateSortOrder.equals("Old")) {
+            queryBuilder.append(" ORDER BY timestamp ASC");  // Oldest records first
+        }
+
+        String query = queryBuilder.toString();
+        String[] argsArray = selectionArgs.toArray(new String[0]);
+
+        return db.rawQuery(query, argsArray);
+    }
+
+
+
+    public Cursor getOldRecords(){
+        SQLiteDatabase DB = this.getReadableDatabase();
+        Cursor cursor = DB.rawQuery("SELECT * FROM urlmessagestbl", null);
+        return cursor;
+    }
+
+
     //urlmessagestbl function
     public void deleteRecord(int id) {
         SQLiteDatabase db = this.getWritableDatabase();

@@ -24,12 +24,12 @@ import java.util.ArrayList;
 
 public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
     private Context context;
-    private ArrayList id, sender_id, url_id, JSONResponse_id, date_id;
+    private ArrayList id, sender_id, url_id, JSONResponse_id, date_id, analysis_id;
     private ArrayList<byte[]> imageURL_id;
 
     private final RecyclerViewInterface recyclerViewInterface;
 
-    public MyAdapter(Context context, ArrayList id, ArrayList sender_id, ArrayList url_id, ArrayList JSONResponse_id, ArrayList<byte[]> imageURL_id,ArrayList date_id, RecyclerViewInterface recyclerViewInterface) {
+    public MyAdapter(Context context, ArrayList id, ArrayList sender_id, ArrayList url_id, ArrayList JSONResponse_id, ArrayList<byte[]> imageURL_id,ArrayList date_id, ArrayList analysis_id , RecyclerViewInterface recyclerViewInterface) {
         this.context = context;
         this.id = id;
         this.sender_id = sender_id;
@@ -37,6 +37,7 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
         this.JSONResponse_id = JSONResponse_id;
         this.imageURL_id = imageURL_id;
         this.date_id = date_id;
+        this.analysis_id = analysis_id;
         this.recyclerViewInterface = recyclerViewInterface;
     }
 
@@ -57,6 +58,7 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
             holder.url_id.setText(String.valueOf(url_id.get(position)));
             holder.JSONResponse_id.setText(String.valueOf(JSONResponse_id.get(position)));
             holder.txtDate.setText(String.valueOf(date_id.get(position)));
+//            holder.txtAnalsis.setText(String.valueOf(analysis_id.get(position)));
 
             // Convert byte array to bitmap and set it to the ImageView
             byte[] image = imageURL_id.get(position);
@@ -67,7 +69,6 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
                 holder.imageView.setImageBitmap(null); // Or a placeholder image
             }
 
-            // JSON analysis for URL safety
             JSONObject jsonObject = new JSONObject(String.valueOf(JSONResponse_id.get(position)));
             int malicious = jsonObject.getJSONObject("data").getJSONObject("attributes")
                     .getJSONObject("stats").getInt("malicious");
@@ -76,17 +77,18 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
             int harmless = jsonObject.getJSONObject("data").getJSONObject("attributes")
                     .getJSONObject("stats").getInt("harmless");
 
+            String analysisResult = analysis_id.get(position).toString();
             // Set analysis text and color based on analysis
-            if (malicious > 0 && suspicious > 0) {
+            if (analysisResult.equals("3")) {
                 holder.txtAnalsis.setText("URL is Malicious and Suspicious");
                 holder.txtAnalsis.setTextColor(ContextCompat.getColor(context, R.color.red));
                 holder.IV_analysis.setImageResource(R.drawable.warning_red);
-            } else if (malicious > 0) {
+            } else if (analysisResult.equals("1")) {
                 holder.txtAnalsis.setText("URL is Malicious");
                 holder.txtAnalsis.setTextColor(ContextCompat.getColor(context, R.color.red));
                 holder.IV_analysis.setImageResource(R.drawable.warning_red);
-            } else if (suspicious > 0) {
-                holder.txtAnalsis.setText("URL is Suspicious or Phishing");
+            } else if (analysisResult.equals("2")) {
+                holder.txtAnalsis.setText("URL is Suspicious");
                 holder.txtAnalsis.setTextColor(ContextCompat.getColor(context, R.color.red));
                 holder.IV_analysis.setImageResource(R.drawable.warning_red);
             } else {

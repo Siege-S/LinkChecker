@@ -4,7 +4,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/FragmentBackgroundColor"
     tools:context=".MessageFragment">
 
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
@@ -24,6 +23,7 @@
                 android:id="@+id/layoutOfflineProcess"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:background="@color/PriOrange"
                 android:orientation="vertical"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
@@ -38,6 +38,7 @@
                     android:text="When Offline LinkGuard Detected URL:"
                     android:textColor="@color/Unselected"
                     android:textSize="16sp" />
+
                 <LinearLayout
                     android:id="@+id/layoutSpinnerButton"
                     android:layout_width="match_parent"
@@ -75,14 +76,66 @@
                     android:fontFamily="@font/poppins_semibold"
                     android:gravity="center"
                     android:text="Please wait while LinkGuard is processing the data"
-                    android:textColor="@color/PriOrange"
+                    android:textColor="@color/Unselected"
                     android:textSize="16sp" />
+
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/linearLayout9"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/FragmentBackgroundColor"
+                android:orientation="vertical"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/txtInternet">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="15dp"
+                    >
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:fontFamily="@font/poppins_semibold"
+                        android:gravity="center"
+                        android:paddingHorizontal="50dp"
+                        android:text="Sort &amp; Filter"
+                        android:textColor="@color/Unselected"
+                        android:textSize="20sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center">
+
+                    <Spinner
+                        android:id="@+id/spin_Date"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:entries="@array/linkguard_Date"
+                        android:spinnerMode="dropdown" />
+
+                    <Spinner
+                        android:id="@+id/spin_Result"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:entries="@array/linkguard_Result"
+                        android:spinnerMode="dropdown" />
+                </LinearLayout>
             </LinearLayout>
 
             <ImageView
                 android:id="@+id/IV_Internet"
                 android:layout_width="match_parent"
                 android:layout_height="224dp"
+                android:background="@color/PriOrange"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/layoutOfflineProcess"
@@ -92,10 +145,11 @@
                 android:id="@+id/txtInternet"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:background="@color/PriOrange"
                 android:fontFamily="@font/poppins_regular"
                 android:text="Please Connect to the Internet"
                 android:textAlignment="center"
-                android:textColor="@color/Unselected"
+                android:textColor="@color/black"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="1.0"
                 app:layout_constraintStart_toStartOf="parent"
@@ -106,12 +160,12 @@
                 android:id="@+id/RV_Messages"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
+                android:background="@color/FragmentBackgroundColor"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="1.0"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/txtInternet"
-                app:layout_constraintVertical_bias="0.0" />
+                app:layout_constraintTop_toBottomOf="@+id/linearLayout9" />
 
             <TextView
                 android:id="@+id/txtdata"
