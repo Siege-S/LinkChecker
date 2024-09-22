@@ -371,7 +371,7 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
                     executorService.execute(() -> {
                         try {
                             String apiUrl = smsListener.SnapshotmachineAPI(url);
-                            String analysisId = smsListener.scanURL(context, url);
+                            String analysisId = smsListener.processUrls(context, url);
 
                             if (analysisId != null) {
                                 String analysisResultJSON = smsListener.getAnalysis(analysisId);
@@ -399,6 +399,8 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
                             // Post failure UI changes to the main thread
                             new Handler(Looper.getMainLooper()).post(() -> layoutSpinnerButton.setVisibility(View.VISIBLE));
                             Log.e("SmsListener", "Error: " + e.getMessage());
+                        } catch (JSONException e) {
+                            throw new RuntimeException(e);
                         } finally {
                             executorService.shutdown();
                         }

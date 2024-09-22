@@ -10,6 +10,8 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
+import org.json.JSONException;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -35,7 +37,7 @@ public class RetryReceiver extends BroadcastReceiver {
                     // Method Call API return API URL
                     String apiUrl = smsListener.SnapshotmachineAPI(url);
                     // Asynchronously scan URL
-                    String analysisId = smsListener.scanURL(context, url);
+                    String analysisId = smsListener.processUrls(context, url);
 
                     if (analysisId != null) {
                         // Asynchronously get analysis result
@@ -71,6 +73,8 @@ public class RetryReceiver extends BroadcastReceiver {
                     smsListener.showRetryNotification(context, url, sender, message);
                     e.printStackTrace();
                 } catch (NoSuchAlgorithmException e) {
+                    throw new RuntimeException(e);
+                } catch (JSONException e) {
                     throw new RuntimeException(e);
                 } finally {
                     // Shutdown the executor service

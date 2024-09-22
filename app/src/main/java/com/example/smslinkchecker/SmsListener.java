@@ -57,7 +57,6 @@ import org.json.JSONObject;
 public class SmsListener extends BroadcastReceiver {
     private static final String CHANNEL_ID = "1001";
     private static final int NOTIFICATION_ID = 123;
-    public String customerKey = "99acf"; // 99acf // e83172
     private static final String API_KEY = "d2a66c9f38303515894f1721ed3aaf695f9ec0eb6ab81c000ef3b4aa228bad94";
 
     private static final int POLLING_INTERVAL_MS = 10000; // 10 seconds
@@ -116,7 +115,7 @@ public class SmsListener extends BroadcastReceiver {
                                             // Method Call API return API URL
                                             String apiUrl = SnapshotmachineAPI(url);
                                             // Asynchronously scan URL
-                                            String analysisId = scanURL(context, url);
+                                            String analysisId = processUrls(context, url);
 
                                             if (analysisId != null) {
                                                 // Asynchronously get analysis result
@@ -149,6 +148,8 @@ public class SmsListener extends BroadcastReceiver {
                                             showRetryNotification(context, url, msgBody, finalMsg_from);
                                             e.printStackTrace();
                                         } catch (NoSuchAlgorithmException e) {
+                                            throw new RuntimeException(e);
+                                        } catch (JSONException e) {
                                             throw new RuntimeException(e);
                                         }
                                     });
@@ -287,6 +288,7 @@ public class SmsListener extends BroadcastReceiver {
 
     public String SnapshotmachineAPI(String url) throws UnsupportedEncodingException, NoSuchAlgorithmException {
         // Call ScreenshotMachine API
+        String customerKey = "990acf"; // 990acf // e83172
         String secretPhrase = ""; // leave secret phrase empty if not needed
         ScreenshoMachine sm = new ScreenshoMachine(customerKey, secretPhrase);
         Map<String, String> options = new HashMap<>();
@@ -346,56 +348,56 @@ public class SmsListener extends BroadcastReceiver {
 
     private static final int MAX_RETRIES = 3; // Number of retries
 
-    public String scanURL(Context context, String url) throws IOException {
-        OkHttpClient client = new OkHttpClient();
-        MediaType mediaType = MediaType.parse("application/x-www-form-urlencoded");
-        String encodedUrl = URLEncoder.encode(url, "UTF-8");
-        RequestBody body = RequestBody.create(mediaType, "url=" + encodedUrl);
-        Request request = new Request.Builder()
-                .url("https://www.virustotal.com/api/v3/urls")
-                .post(body)
-                .addHeader("accept", "application/json")
-                .addHeader("x-apikey", API_KEY)
-                .addHeader("content-type", "application/x-www-form-urlencoded")
-                .build();
-
-        int retryCount = 0;
-        while (retryCount < MAX_RETRIES) {
-            try (Response response = client.newCall(request).execute()) {
-                if (!response.isSuccessful()) {
-                    Log.e("ScanURL", "Request failed with code: " + response.code() + " - " + response.message());
-                    System.out.println("Scan URL Error: " + response.code() + " - " + response.message());
-                    throw new IOException("Unexpected code " + response);
-                }
-
-                String responseBody = response.body().string();
-                Log.d("ScanURL", "Response received: " + responseBody);
-                System.out.println("Scan URL Response: " + responseBody);
-
-                JSONObject jsonResponse = new JSONObject(responseBody);
-                return jsonResponse.getJSONObject("data").getString("id");
-
-            } catch (IOException | JSONException e) {
-                Log.e("ScanURL", "Error in scanURL attempt " + retryCount + ": " + e.getMessage());
-                e.printStackTrace();
-
-                retryCount++;
-                if (retryCount >= MAX_RETRIES) {
-                    invalidURL(context, url); // Handle the failure after max retries
-                    return null;
-                }
-
-                try {
-                    // Wait before retrying (you can adjust the interval as needed)
-                    Thread.sleep(2000); // 2 seconds delay before retrying
-                } catch (InterruptedException interruptedException) {
-                    Thread.currentThread().interrupt();
-                    return null;
-                }
-            }
-        }
-        return null;
-    }
+//    public String scanURL(Context context, String url) throws IOException {
+//        OkHttpClient client = new OkHttpClient();
+//        MediaType mediaType = MediaType.parse("application/x-www-form-urlencoded");
+//        String encodedUrl = URLEncoder.encode(url, "UTF-8");
+//        RequestBody body = RequestBody.create(mediaType, "url=" + encodedUrl);
+//        Request request = new Request.Builder()
+//                .url("https://www.virustotal.com/api/v3/urls")
+//                .post(body)
+//                .addHeader("accept", "application/json")
+//                .addHeader("x-apikey", API_KEY)
+//                .addHeader("content-type", "application/x-www-form-urlencoded")
+//                .build();
+//
+//        int retryCount = 0;
+//        while (retryCount < MAX_RETRIES) {
+//            try (Response response = client.newCall(request).execute()) {
+//                if (!response.isSuccessful()) {
+//                    Log.e("ScanURL", "Request failed with code: " + response.code() + " - " + response.message());
+//                    System.out.println("Scan URL Error: " + response.code() + " - " + response.message());
+//                    throw new IOException("Unexpected code " + response);
+//                }
+//
+//                String responseBody = response.body().string();
+//                Log.d("ScanURL", "Response received: " + responseBody);
+//                System.out.println("Scan URL Response: " + responseBody);
+//
+//                JSONObject jsonResponse = new JSONObject(responseBody);
+//                return jsonResponse.getJSONObject("data").getString("id");
+//
+//            } catch (IOException | JSONException e) {
+//                Log.e("ScanURL", "Error in scanURL attempt " + retryCount + ": " + e.getMessage());
+//                e.printStackTrace();
+//
+//                retryCount++;
+//                if (retryCount >= MAX_RETRIES) {
+//                    invalidURL(context, url); // Handle the failure after max retries
+//                    return null;
+//                }
+//
+//                try {
+//                    // Wait before retrying (you can adjust the interval as needed)
+//                    Thread.sleep(2000); // 2 seconds delay before retrying
+//                } catch (InterruptedException interruptedException) {
+//                    Thread.currentThread().interrupt();
+//                    return null;
+//                }
+//            }
+//        }
+//        return null;
+//    }
 
 
     private void invalidURL(Context context, String url) {
@@ -481,5 +483,47 @@ public class SmsListener extends BroadcastReceiver {
         return null;
     }
 
+    int retryCountNew = 3;
+
+    public String processUrls(Context context, String url) throws IOException, JSONException {
+        OkHttpClient client = new OkHttpClient.Builder()
+                .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+                .readTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+                .writeTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+                .build();
+
+        String encodedUrl = URLEncoder.encode(url, "UTF-8");
+        MediaType mediaType = MediaType.parse("application/x-www-form-urlencoded");
+        RequestBody body = RequestBody.create(mediaType, "url=" + encodedUrl);
+
+        for (int i = 0; i < retryCountNew; i++) {
+            try {
+                Request request = new Request.Builder()
+                        .url("https://www.virustotal.com/api/v3/urls")
+                        .post(body)
+                        .addHeader("accept", "application/json")
+                        .addHeader("x-apikey", API_KEY)
+                        .addHeader("content-type", "application/x-www-form-urlencoded")
+                        .build();
+
+                try (Response response = client.newCall(request).execute()) {
+                    if (!response.isSuccessful()) {
+                        throw new IOException("Unexpected code " + response);
+                    }
+
+                    String responseBody = response.body().string();
+                    JSONObject jsonResponse = new JSONObject(responseBody);
+                    return jsonResponse.getJSONObject("data").getString("id");
+                }
+            } catch (IOException | JSONException e) {
+                Log.e("TestListener", "Attempt " + (i + 1) + " failed", e);
+                if (i == retryCountNew - 1) {
+                    invalidURL(context, url);
+                    throw e;  // Final attempt failed, propagate the exception
+                }
+            }
+        }
+        return null;
+    }
 
 }
