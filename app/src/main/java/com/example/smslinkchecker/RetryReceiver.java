@@ -24,7 +24,6 @@ public class RetryReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         String url = intent.getStringExtra("url");
         String sender = intent.getStringExtra("sender");
-        String message = intent.getStringExtra("message");
 
         if (url != null) {
             // Re-attempt the scan when the retry action is triggered
@@ -56,21 +55,21 @@ public class RetryReceiver extends BroadcastReceiver {
 
                                 // Insert into database in SQLite
                                 DBHelper dbHelper = new DBHelper(context);
-                                dbHelper.insertData(url, sender , message, apiUrl, analysis, image, analysisResultJSON);
+                                dbHelper.insertData(url, sender, apiUrl, analysis, image, analysisResultJSON);
                             });
                         } else {
-                            smsListener.showRetryNotification(context, url, message, sender);
+                            smsListener.showRetryNotification(context, url, sender);
                             Log.v("GetAnalysis", "Failed to get analysis result.");
                             System.out.println("Failed to get analysis result.");
                         }
                     } else {
-                        smsListener.showRetryNotification(context, url, sender, message);
+                        smsListener.showRetryNotification(context, url, sender);
                         Log.v("ScanURL", "Failed to scan URL.");
                         System.out.println("Failed to scan URL.");
                     }
                 } catch (IOException e) {
                     Log.v("SmsListener", "Error in VirusTotal: " + e.getMessage());
-                    smsListener.showRetryNotification(context, url, sender, message);
+                    smsListener.showRetryNotification(context, url, sender);
                     e.printStackTrace();
                 } catch (NoSuchAlgorithmException e) {
                     throw new RuntimeException(e);

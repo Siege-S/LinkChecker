@@ -22,9 +22,9 @@ public class DBHelper extends SQLiteOpenHelper {
     }
     @Override
     public void onCreate(SQLiteDatabase db) {
-        String sql = "CREATE TABLE urlmessagestbl (id INTEGER PRIMARY KEY AUTOINCREMENT, url TEXT, contactnumber TEXT, message TEXT, apiurl TEXT, analysis TEXT, screenshot BLOB, analysisJSON TEXT, timestamp TEXT DEFAULT (datetime('now','localtime')) )";
+        String sql = "CREATE TABLE urlmessagestbl (id INTEGER PRIMARY KEY AUTOINCREMENT, url TEXT, contactnumber TEXT, apiurl TEXT, analysis TEXT, screenshot BLOB, analysisJSON TEXT, timestamp TEXT DEFAULT (datetime('now','localtime')) )";
         db.execSQL(sql);
-        String newTable = "CREATE TABLE urlOfflineTbl (id INTEGER PRIMARY KEY AUTOINCREMENT, url TEXT, sender TEXT, message TEXT, timestamp TEXT DEFAULT (datetime('now','localtime')))";
+        String newTable = "CREATE TABLE urlOfflineTbl (id INTEGER PRIMARY KEY AUTOINCREMENT, url TEXT, sender TEXT, timestamp TEXT DEFAULT (datetime('now','localtime')))";
         db.execSQL(newTable);
     }
 
@@ -93,14 +93,13 @@ public class DBHelper extends SQLiteOpenHelper {
         return offlineURL;
     }
 
-    public boolean insertOfflineTbl(String url, String sender, String message) {
+    public boolean insertOfflineTbl(String url, String sender) {
         SQLiteDatabase db = null;
         try {
             db = this.getWritableDatabase();
             ContentValues contentValues = new ContentValues();
             contentValues.put("url", url);
             contentValues.put("sender", sender);
-            contentValues.put("message", message);
             contentValues.put("timestamp", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date()));
 
             long result = db.insert("urlOfflineTbl", null, contentValues);
@@ -121,14 +120,13 @@ public class DBHelper extends SQLiteOpenHelper {
         }
     }
     //urlmessagestbl function
-    public void insertData(String url, String sender,  String messageBody, String apiUrl, String analysis, byte[] screenShot, String analysisJSON) {
+    public void insertData(String url, String sender, String apiUrl, String analysis, byte[] screenShot, String analysisJSON) {
         SQLiteDatabase db = null;
         try {
             db = this.getWritableDatabase();
             ContentValues contentValues = new ContentValues();
             contentValues.put("url", url);
             contentValues.put("contactnumber", sender);
-            contentValues.put("message", messageBody);
             contentValues.put("apiurl", apiUrl);
             contentValues.put("analysis", analysis);
             contentValues.put("screenshot", screenShot);
@@ -151,16 +149,16 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
     //urlmessagestbl function
-    public Cursor getdata(){
-        SQLiteDatabase DB = this.getReadableDatabase();
-        Cursor cursor = DB.rawQuery("SELECT * FROM urlmessagestbl ORDER BY timestamp DESC", null);
-        return cursor;
-    }
-    public Cursor getRecentRecords(){
-        SQLiteDatabase DB = this.getReadableDatabase();
-        Cursor cursor = DB.rawQuery("SELECT * FROM urlmessagestbl ORDER BY timestamp DESC", null);
-        return cursor;
-    }
+//    public Cursor getdata(){
+//        SQLiteDatabase DB = this.getReadableDatabase();
+//        Cursor cursor = DB.rawQuery("SELECT * FROM urlmessagestbl ORDER BY timestamp DESC", null);
+//        return cursor;
+//    }
+//    public Cursor getRecentRecords(){
+//        SQLiteDatabase DB = this.getReadableDatabase();
+//        Cursor cursor = DB.rawQuery("SELECT * FROM urlmessagestbl ORDER BY timestamp DESC", null);
+//        return cursor;
+//    }
     public Cursor getFilteredData(String dateSortOrder, String resultFilter) {
         SQLiteDatabase db = this.getWritableDatabase();
 

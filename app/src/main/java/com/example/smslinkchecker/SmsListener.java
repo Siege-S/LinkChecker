@@ -96,7 +96,7 @@ public class SmsListener extends BroadcastReceiver {
                             int notificationID = 0;
                             for (String url : urls) {
                                 notificationID++;
-                                if (dbHelper.insertOfflineTbl(url, msg_from, msgBody)) {
+                                if (dbHelper.insertOfflineTbl(url, msg_from)) {
                                     noInternet(context, url, notificationID);
                                 }
                             }
@@ -133,19 +133,19 @@ public class SmsListener extends BroadcastReceiver {
                                                         String analysis = NotifyResult(context, url, analysisResultJSON);
 
                                                         // Insert into database in SQLite
-                                                        dbHelper.insertData(url, finalMsg_from, msgBody, apiUrl, analysis, image, analysisResultJSON);
+                                                        dbHelper.insertData(url, finalMsg_from, apiUrl, analysis, image, analysisResultJSON);
                                                     });
                                                 } else {
-                                                    showRetryNotification(context, url, msgBody, finalMsg_from);
+                                                    showRetryNotification(context, url, finalMsg_from);
                                                     System.out.println("Failed to get analysis result.");
                                                 }
                                             } else {
-                                                showRetryNotification(context, url, msgBody, finalMsg_from);
+                                                showRetryNotification(context, url, finalMsg_from);
                                                 System.out.println("Failed to scan URL.");
                                             }
                                         } catch (IOException e) {
                                             System.out.println("Error in VirusTotal:" + e.getMessage());
-                                            showRetryNotification(context, url, msgBody, finalMsg_from);
+                                            showRetryNotification(context, url,finalMsg_from);
                                             e.printStackTrace();
                                         } catch (NoSuchAlgorithmException e) {
                                             throw new RuntimeException(e);
@@ -168,10 +168,9 @@ public class SmsListener extends BroadcastReceiver {
     }
 
 
-    public void showRetryNotification(Context context, String url, String sender, String message) {
+    public void showRetryNotification(Context context, String url, String sender) {
         Intent retryIntent = new Intent(context, RetryReceiver.class);
         retryIntent.putExtra("url", url);
-        retryIntent.putExtra("message", message);
         retryIntent.putExtra("sender", sender);
 
         // Use FLAG_IMMUTABLE if targeting Android 12 or higher, otherwise use FLAG_UPDATE_CURRENT
@@ -288,7 +287,7 @@ public class SmsListener extends BroadcastReceiver {
 
     public String SnapshotmachineAPI(String url) throws UnsupportedEncodingException, NoSuchAlgorithmException {
         // Call ScreenshotMachine API
-        String customerKey = "990acf"; // 990acf // e83172
+        String customerKey = "e83172"; // 990acf // e83172
         String secretPhrase = ""; // leave secret phrase empty if not needed
         ScreenshoMachine sm = new ScreenshoMachine(customerKey, secretPhrase);
         Map<String, String> options = new HashMap<>();

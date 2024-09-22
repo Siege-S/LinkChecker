@@ -332,10 +332,10 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
                     ID.add(cursor.getString(0));           // Column 0: ID
                     Sender.add(cursor.getString(2));       // Column 2: Sender
                     URL.add(cursor.getString(1));          // Column 1: URL
-                    JSONResponse.add(cursor.getString(7)); // Column 7: JSONResponse
-                    imageURL.add(cursor.getBlob(6));       // Column 6: ImageURL
-                    Date.add(cursor.getString(8));         // Column 8: Date
-                    Analysis.add(cursor.getString(5));     // Column 9: Analysis
+                    JSONResponse.add(cursor.getString(6)); // Column 7: JSONResponse
+                    imageURL.add(cursor.getBlob(5));       // Column 6: ImageURL
+                    Date.add(cursor.getString(7));         // Column 8: Date
+                    Analysis.add(cursor.getString(4));     // Column 9: Analysis
 
                 } while (cursor.moveToNext());
             }
@@ -355,7 +355,6 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
         if (cursor != null && cursor.moveToFirst()) {
             int urlIndex = cursor.getColumnIndex("url");
             int senderIndex = cursor.getColumnIndex("sender");
-            int messageIndex = cursor.getColumnIndex("message");
             int idIndex = cursor.getColumnIndex("id");
 
             if (urlIndex != -1 && idIndex != -1) {
@@ -363,7 +362,6 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
                     SmsListener smsListener = new SmsListener();
                     String url = cursor.getString(urlIndex);
                     String sender = cursor.getString(senderIndex);
-                    String message = cursor.getString(messageIndex);
                     int id = cursor.getInt(idIndex);
 
                     // Process the data asynchronously
@@ -384,7 +382,7 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
                                     // Post UI changes to the main thread
                                     new Handler(Looper.getMainLooper()).post(() -> {
                                         String analysis = smsListener.NotifyResult(context, url, analysisResultJSON);
-                                        dbHelper.insertData(url, sender, message, apiUrl, analysis, image, analysisResultJSON);
+                                        dbHelper.insertData(url, sender, apiUrl, analysis, image, analysisResultJSON);
 
                                         // After processing, delete the record by its ID
                                         dbHelper.deleteRecordById(id);
