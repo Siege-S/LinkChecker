@@ -1,13 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    app:cardElevation="12dp"
-    app:cardCornerRadius="16dp"
     android:layout_margin="16dp"
-    android:backgroundTint="#efefef">
+    app:cardCornerRadius="16dp"
+    app:cardElevation="12dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -15,93 +14,240 @@
         android:layout_margin="16dp"
         android:orientation="vertical">
 
-        <ImageView
-            android:id="@+id/IV_ImageUrl"
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/constraintLayout"
             android:layout_width="match_parent"
-            android:layout_height="222dp" />
+            android:layout_height="match_parent">
+
+            <ImageView
+                android:id="@+id/IV_ImageUrl"
+                android:layout_width="match_parent"
+                android:layout_height="222dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <LinearLayout
+                android:id="@+id/clickLayout"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/block_content"
+                android:clickable="true"
+                android:gravity="center"
+                android:onClick="btnSeeContent"
+                android:orientation="vertical"
+                app:layout_constraintBottom_toBottomOf="@+id/constraintLayout"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.495"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <TextView
+                    android:id="@+id/txtBlockContent"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/poppins_bold"
+                    android:text="Content Blocked"
+                    android:textColor="@color/gray"
+                    android:textSize="20sp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintHorizontal_bias="0.49"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
+
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginRight="5dp"
+                        app:srcCompat="@drawable/eye" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/poppins_semibold"
+                        android:text="See Content"
+                        android:textColor="@color/gray"
+                        android:textSize="16sp" />
+                </LinearLayout>
+
+
+            </LinearLayout>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
 
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
             android:layout_gravity="center_vertical"
-            >
+            android:orientation="horizontal"
+            android:visibility="gone">
+
             <TextView
+                style="bold"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="ID: "
-                android:textSize="24dp"
                 android:textColor="@color/black"
-                android:visibility="visible"
-                style="bold"
-                >
-            </TextView>
+                android:textSize="24sp"
+                android:visibility="visible"></TextView>
 
             <TextView
                 android:id="@+id/txtID"
+                style="bold"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="24dp"
                 android:textColor="@color/black"
-                android:visibility="visible"
-                style="bold"
-                >
-            </TextView>
+                android:textSize="24sp"
+                android:visibility="visible"></TextView>
 
         </LinearLayout>
 
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
             android:layout_gravity="center_vertical"
-            >
+            android:orientation="horizontal">
+
             <TextView
+                style="bold"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:fontFamily="@font/poppins_regular"
                 android:text="Sender: "
-                android:textSize="24dp"
                 android:textColor="@color/black"
-                style="bold"
-                >
+                android:textSize="16sp">
+
             </TextView>
 
             <TextView
                 android:id="@+id/txtSender"
+                style="bold"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="24dp"
+                android:fontFamily="@font/poppins_regular"
                 android:textColor="@color/black"
-                style="bold"
-                >
+                android:textSize="16sp">
+
             </TextView>
         </LinearLayout>
 
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
             android:layout_gravity="center_vertical"
-            >
+            android:orientation="horizontal">
+
             <TextView
+                style="bold"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:fontFamily="@font/poppins_regular"
                 android:text="Url Detected: "
-                android:textSize="24dp"
                 android:textColor="@color/black"
-                style="bold"
-                >
+                android:textSize="16sp">
+
             </TextView>
 
             <TextView
                 android:id="@+id/txtUrl"
+                style="bold"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="24dp"
+                android:fontFamily="@font/poppins_regular"
                 android:textColor="@color/black"
-                style="bold"
-                >
+                android:textSize="16sp">
+
             </TextView>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                style="bold"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/poppins_regular"
+                android:text="Date: "
+                android:textColor="@color/black"
+                android:textSize="16sp">
+
+            </TextView>
+
+            <TextView
+                android:id="@+id/txtDate"
+                style="bold"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/poppins_regular"
+                android:textColor="@color/black"
+                android:textSize="16sp">
+
+            </TextView>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                style="bold"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="JSON: "
+                android:textColor="@color/black"
+                android:textSize="16sp"
+                android:visibility="gone">
+
+            </TextView>
+
+            <TextView
+                android:id="@+id/txtJSON"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/black"
+                android:textSize="24sp"
+                android:visibility="gone"></TextView>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical">
+
+            <ImageView
+                android:id="@+id/IV_analysis"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_marginRight="16dp"
+                app:srcCompat="@color/BackgroundColor" />
+
+            <TextView
+                android:id="@+id/txtAnalysis"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:fontFamily="@font/poppins_semibold"
+                android:gravity="center"
+                android:text="Analysis"
+                android:textAlignment="center"
+                android:textColor="@color/black"
+                android:textSize="16sp" />
+
 
         </LinearLayout>
 

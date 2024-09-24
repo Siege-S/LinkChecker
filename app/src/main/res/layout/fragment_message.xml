@@ -1,13 +1,188 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/FragmentBackgroundColor"
     tools:context=".MessageFragment">
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/RV_Messages"
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/swipeRefreshLayout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintVertical_bias="0.0">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <LinearLayout
+                android:id="@+id/layoutOfflineProcess"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/PriOrange"
+                android:orientation="vertical"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <TextView
+                    android:id="@+id/txtDetectedURL"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/poppins_semibold"
+                    android:gravity="center"
+                    android:text="When Offline LinkGuard Detected URL:"
+                    android:textColor="@color/Unselected"
+                    android:textSize="16sp" />
+
+                <LinearLayout
+                    android:id="@+id/layoutSpinnerButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="horizontal"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent">
+
+                    <Spinner
+                        android:id="@+id/spin_url"
+                        android:layout_width="170dp"
+                        android:layout_height="match_parent"
+                        android:spinnerMode="dropdown" />
+
+                    <Button
+                        android:id="@+id/btnScanOffline"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Scan All" />
+
+                    <Button
+                        android:id="@+id/btnRemoveItem"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Remove Item" />
+
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/txtProcessText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/poppins_semibold"
+                    android:gravity="center"
+                    android:text="Please wait while LinkGuard is processing the data"
+                    android:textColor="@color/Unselected"
+                    android:textSize="16sp" />
+
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/linearLayout9"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/FragmentBackgroundColor"
+                android:orientation="vertical"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/txtInternet">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="15dp"
+                    >
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:fontFamily="@font/poppins_semibold"
+                        android:gravity="center"
+                        android:paddingHorizontal="50dp"
+                        android:text="Sort &amp; Filter"
+                        android:textColor="@color/Unselected"
+                        android:textSize="20sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center">
+
+                    <Spinner
+                        android:id="@+id/spin_Date"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:entries="@array/linkguard_Date"
+                        android:spinnerMode="dropdown" />
+
+                    <Spinner
+                        android:id="@+id/spin_Result"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:entries="@array/linkguard_Result"
+                        android:spinnerMode="dropdown" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <ImageView
+                android:id="@+id/IV_Internet"
+                android:layout_width="match_parent"
+                android:layout_height="224dp"
+                android:background="@color/PriOrange"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/layoutOfflineProcess"
+                app:srcCompat="@drawable/nowifi" />
+
+            <TextView
+                android:id="@+id/txtInternet"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/PriOrange"
+                android:fontFamily="@font/poppins_regular"
+                android:text="Please Connect to the Internet"
+                android:textAlignment="center"
+                android:textColor="@color/Unselected"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="1.0"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/IV_Internet" />
+
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/RV_Messages"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:background="@color/FragmentBackgroundColor"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="1.0"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/linearLayout9" />
+
+            <TextView
+                android:id="@+id/txtdata"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="396dp"
+                android:gravity="center"
+                android:text="No Data Found"
+                android:textColor="@color/white"
+                android:textSize="24sp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
+
 </FrameLayout>
