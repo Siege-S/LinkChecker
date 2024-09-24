@@ -153,8 +153,6 @@ public class SettingsFragment extends Fragment {
             intent.setComponent(new ComponentName("com.vivo.permissionmanager", "com.vivo.permissionmanager.activity.BgStartUpManagerActivity"));
         } else if ("letv".equalsIgnoreCase(manufacturer)) {
             intent.setComponent(new ComponentName("com.letv.android.letvsafe", "com.letv.android.letvsafe.AutobootManageActivity"));
-        } else if ("honor".equalsIgnoreCase(manufacturer) || "huawei".equalsIgnoreCase(manufacturer)) {
-            intent.setComponent(new ComponentName("com.huawei.systemmanager", "com.huawei.systemmanager.optimize.process.ProtectActivity"));
         } else {
             // Fallback message for other manufacturers
             Toast.makeText(getContext(), "Settings>>Manage Apps>>Auto-Start>>LinkGuard", Toast.LENGTH_LONG).show();

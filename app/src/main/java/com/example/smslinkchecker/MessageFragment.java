@@ -102,6 +102,13 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
     Spinner spin_Date;
     Spinner spin_Result;
     View layoutSpinnerButton;
+    View layoutOfflineProcess;
+    Button btnScanOffline;
+    Button btnRemoveItem;
+    ImageView internet;
+    TextView txtInternet;
+    TextView txtDetectedURL;
+    TextView txtProcessText;
     public MessageFragment() {
         // Required empty public constructor
     }
@@ -162,12 +169,12 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
 //      displayData();
 
         // Check internet connection
-        ImageView internet = view.findViewById(R.id.IV_Internet);
-        TextView txtInternet = view.findViewById(R.id.txtInternet);
-        View layoutOfflineProcess = view.findViewById(R.id.layoutOfflineProcess);
+        internet = view.findViewById(R.id.IV_Internet);
+        txtInternet = view.findViewById(R.id.txtInternet);
+        layoutOfflineProcess = view.findViewById(R.id.layoutOfflineProcess);
         layoutSpinnerButton = view.findViewById(R.id.layoutSpinnerButton);
-        TextView txtDetectedURL = view.findViewById(R.id.txtDetectedURL);
-        TextView txtProcessText = view.findViewById(R.id.txtProcessText);
+        txtDetectedURL = view.findViewById(R.id.txtDetectedURL);
+        txtProcessText = view.findViewById(R.id.txtProcessText);
         txtProcessText.setVisibility(View.GONE);
         int count = dbHelper.getOfflineDataCount();
         txtDetectedURL.setText("When Offline LinkGuard Detected "+ count + " URL");
@@ -178,10 +185,12 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
         }
         if (isInternetConnected(getContext())) {
             System.out.println("Internet Connected");
+            layoutSpinnerButton.setVisibility(View.VISIBLE);
             internet.setVisibility(View.GONE);
             txtInternet.setVisibility(View.GONE);
         } else {
             System.out.println("Internet Not Connected");
+            layoutSpinnerButton.setVisibility(View.GONE);
             internet.setVisibility(View.VISIBLE);
             txtInternet.setVisibility(View.VISIBLE);
         }
@@ -196,8 +205,8 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
 
         // Offline Feature
         Spinner spin_url = view.findViewById(R.id.spin_url);
-        Button btnScanOffline = view.findViewById(R.id.btnScanOffline);
-        Button btnRemoveItem = view.findViewById(R.id.btnRemoveItem);
+        btnScanOffline = view.findViewById(R.id.btnScanOffline);
+        btnRemoveItem = view.findViewById(R.id.btnRemoveItem);
         // Fetch URLs from SQLite
         ArrayList<String> offlineURL = dbHelper.getOfflineUrls();
         // Create an ArrayAdapter with the retrieved URLs
@@ -251,7 +260,8 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
                 Context context = getContext();
                 txtProcessText.setVisibility(View.VISIBLE);
                 processOfflineData(context);
-                layoutSpinnerButton.setVisibility(View.GONE);
+                btnScanOffline.setEnabled(false);
+                btnRemoveItem.setEnabled(false);
                 Toast.makeText(getContext(), "Please wait while LinkGuard is processing the data", Toast.LENGTH_LONG).show();
             }
         }); // Offline Feature
@@ -259,8 +269,6 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
         // Sort & Filter Feature
         spin_Date = view.findViewById(R.id.spin_Date);
         spin_Result = view.findViewById(R.id.spin_Result);
-        String selectedDate = "";
-        int selectedResult = 0;
 
         ArrayAdapter<CharSequence> adapterSpinDate = ArrayAdapter.createFromResource(getContext(), R.array.linkguard_Date, R.layout.spinner_item);
         adapterSpinDate.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -334,15 +342,12 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
                     URL.add(cursor.getString(1));          // Column 1: URL
                     JSONResponse.add(cursor.getString(6)); // Column 7: JSONResponse
                     imageURL.add(cursor.getBlob(5));       // Column 6: ImageURL
-                    Date.add(cursor.getString(7));         // Column 8: Date
+                    Date.add(cursor.getString(7));         // Column 8: Timestamp
                     Analysis.add(cursor.getString(4));     // Column 9: Analysis
 
                 } while (cursor.moveToNext());
             }
         }
-
-
-
         cursor.close();
         // Notify the adapter that the data set has changed to refresh the RecyclerView
         adapter.notifyDataSetChanged();
@@ -386,18 +391,30 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
 
                                         // After processing, delete the record by its ID
                                         dbHelper.deleteRecordById(id);
-                                        layoutSpinnerButton.setVisibility(View.GONE); // Hide layout if successful
+                                        btnScanOffline.setEnabled(true);
+                                        btnRemoveItem.setEnabled(true);
+                                        layoutOfflineProcess.setVisibility(View.GONE); // Hide layout if successful
                                     });
                                 }
                             } else {
                                 // Post failure UI changes to the main thread
-                                new Handler(Looper.getMainLooper()).post(() -> layoutSpinnerButton.setVisibility(View.VISIBLE));
+                                new Handler(Looper.getMainLooper()).post(() -> {
+                                    btnScanOffline.setEnabled(true);
+                                    btnRemoveItem.setEnabled(true);
+                                });
                             }
                         } catch (IOException | NoSuchAlgorithmException e) {
                             // Post failure UI changes to the main thread
-                            new Handler(Looper.getMainLooper()).post(() -> layoutSpinnerButton.setVisibility(View.VISIBLE));
+                            new Handler(Looper.getMainLooper()).post(() -> {
+                                btnScanOffline.setEnabled(true);
+                                btnRemoveItem.setEnabled(true);
+                            });
                             Log.e("SmsListener", "Error: " + e.getMessage());
                         } catch (JSONException e) {
+                            new Handler(Looper.getMainLooper()).post(() -> {
+                                btnScanOffline.setEnabled(true);
+                                btnRemoveItem.setEnabled(true);
+                            });
                             throw new RuntimeException(e);
                         } finally {
                             executorService.shutdown();
@@ -408,21 +425,58 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
             cursor.close(); // Close the cursor when done
         } else {
             // Post UI changes to the main thread if cursor is null or empty
-            new Handler(Looper.getMainLooper()).post(() -> layoutSpinnerButton.setVisibility(View.VISIBLE));
+            new Handler(Looper.getMainLooper()).post(() -> {
+                btnScanOffline.setEnabled(true);
+                btnRemoveItem.setEnabled(true);
+            });
             Log.e("Error", "Cursor is null or empty");
         }
     }
 
     private void refreshData() {
-        FragmentManager fragmentManager = getActivity().getSupportFragmentManager();
-        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+//        FragmentManager fragmentManager = getActivity().getSupportFragmentManager();
+//        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+//
+//        MessageFragment messageFragment = new MessageFragment(); // or MessageFragment.newInstance() if you have arguments
+//
+//        fragmentTransaction.replace(R.id.frame_layout, messageFragment);
+//        // fragmentTransaction.addToBackStack(null); // Optional: add the transaction to the back stack so the user can navigate back
+//        fragmentTransaction.commit();
 
-        MessageFragment messageFragment = new MessageFragment(); // or MessageFragment.newInstance() if you have arguments
-
-        fragmentTransaction.replace(R.id.frame_layout, messageFragment);
-        // fragmentTransaction.addToBackStack(null); // Optional: add the transaction to the back stack so the user can navigate back
-        fragmentTransaction.commit();
-
+        // Check Offline Detected URL
+        int count = DB.getOfflineDataCount();
+        txtDetectedURL.setText("When Offline LinkGuard Detected "+ count + " URL");
+        if(count == 0){
+            layoutOfflineProcess.setVisibility(View.GONE);
+        } else {
+            layoutOfflineProcess.setVisibility(View.VISIBLE);
+        }
+        // Check Internet
+        if (isInternetConnected(getContext())) {
+            System.out.println("Internet Connected");
+            layoutSpinnerButton.setVisibility(View.VISIBLE);
+            internet.setVisibility(View.GONE);
+            txtInternet.setVisibility(View.GONE);
+        } else {
+            System.out.println("Internet Not Connected");
+            layoutSpinnerButton.setVisibility(View.GONE);
+            internet.setVisibility(View.VISIBLE);
+            txtInternet.setVisibility(View.VISIBLE);
+        }
+        // Check Data
+        String selectedDateSortOrder = spin_Date.getSelectedItem().toString();  // "Recent", "Old", or "All"
+        String selectedResultFilter = spin_Result.getSelectedItem().toString(); // Result type or "All"
+        if(selectedResultFilter.equals("Malicious and Suspicious")) {
+            selectedResultFilter = "3";
+        } else if (selectedResultFilter.equals("Malicious")) {
+            selectedResultFilter = "1";
+        } else if (selectedResultFilter.equals("Suspicious")) {
+            selectedResultFilter = "2";
+        } else if (selectedResultFilter.equals("Harmless")) {
+            selectedResultFilter = "0";
+        }
+        Cursor cursor = DB.getFilteredData(selectedDateSortOrder, selectedResultFilter);
+        updateRecyclerView(cursor);
         // Stop the refreshing animation
         swipeRefreshLayout.setRefreshing(false);
     }

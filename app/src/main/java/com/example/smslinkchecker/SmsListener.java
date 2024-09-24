@@ -222,7 +222,7 @@ public class SmsListener extends BroadcastReceiver {
         // Notification 1
         NotificationCompat.Builder builder1 = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_notification)
-                .setContentTitle("LinkGuard identified the URL as suspicious or a phishing threat.")
+                .setContentTitle("LinkGuard identified the URL as suspicious.")
                 .setContentText("URL: "+url)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setAutoCancel(true) // Dismiss the notification when clicked
@@ -239,7 +239,7 @@ public class SmsListener extends BroadcastReceiver {
         // Notification 3
         NotificationCompat.Builder builder3 = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_notification)
-                .setContentTitle("LinkGuard identified the URL as both malicious and a phishing threat.")
+                .setContentTitle("LinkGuard identified the URL as both Malicious and Suspicious.")
                 .setContentText("URL: " + url)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setAutoCancel(true) // Dismiss the notification when clicked
@@ -345,7 +345,7 @@ public class SmsListener extends BroadcastReceiver {
         notificationManager.notify(notificationID, builder.build());
     }
 
-    private static final int MAX_RETRIES = 3; // Number of retries
+//    private static final int MAX_RETRIES = 3; // Number of retries
 
 //    public String scanURL(Context context, String url) throws IOException {
 //        OkHttpClient client = new OkHttpClient();
