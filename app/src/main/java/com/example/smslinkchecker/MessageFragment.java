@@ -105,6 +105,7 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
     View layoutOfflineProcess;
     Button btnScanOffline;
     Button btnRemoveItem;
+    Spinner spin_url;
     ImageView internet;
     TextView txtInternet;
     TextView txtDetectedURL;
@@ -204,7 +205,7 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
         });
 
         // Offline Feature
-        Spinner spin_url = view.findViewById(R.id.spin_url);
+        spin_url = view.findViewById(R.id.spin_url);
         btnScanOffline = view.findViewById(R.id.btnScanOffline);
         btnRemoveItem = view.findViewById(R.id.btnRemoveItem);
         // Fetch URLs from SQLite
@@ -451,6 +452,14 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
         } else {
             layoutOfflineProcess.setVisibility(View.VISIBLE);
         }
+        // Fetch URLs from SQLite
+        ArrayList<String> offlineURL = DB.getOfflineUrls();
+        // Create an ArrayAdapter with the retrieved URLs
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(getContext(), R.layout.spinner_item, offlineURL);
+        // Specify the layout for dropdown choices
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        // Set the adapter to the spinner
+        spin_url.setAdapter(adapter);
         // Check Internet
         if (isInternetConnected(getContext())) {
             System.out.println("Internet Connected");
