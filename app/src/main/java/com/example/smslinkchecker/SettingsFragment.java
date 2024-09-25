@@ -14,6 +14,9 @@ import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import android.provider.Settings;
 import android.view.LayoutInflater;
@@ -98,8 +101,6 @@ public class SettingsFragment extends Fragment {
                 openNotificationSettings();
             }
         });
-
-
         switchPermission = view.findViewById(R.id.switchPermission);
 
         // Check current permission status and update the switch state
@@ -122,7 +123,6 @@ public class SettingsFragment extends Fragment {
     }
     private void openNotificationSettings() {
         Intent intent = new Intent();
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             // For Android 8.0 and above
             intent.setAction(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS);
@@ -133,7 +133,6 @@ public class SettingsFragment extends Fragment {
             intent.addCategory(Intent.CATEGORY_DEFAULT);
             intent.setData(Uri.parse("package:" + getActivity().getPackageName()));
         }
-
         startActivity(intent);
     }
     private void openAppSettings() {
