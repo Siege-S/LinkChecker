@@ -86,7 +86,7 @@ public class DetailMessageFragment extends Fragment {
         TextView senderTextView = view.findViewById(R.id.txtdetailNumber);
         TextView urlTextView = view.findViewById(R.id.txtdetailURL);
         TextView jsonTextView = view.findViewById(R.id.txtJSON);
-
+        jsonTextView.setVisibility(View.GONE);
         // Display
         imageView = view.findViewById(R.id.IV_detailImage);
         idTextView.setText(mId);
@@ -170,6 +170,7 @@ public class DetailMessageFragment extends Fragment {
 
         Button btndelete = view.findViewById(R.id.btndelete);
         Button btnBack = view.findViewById(R.id.btnBack);
+        Button btnviewResult = view.findViewById(R.id.btnviewResult);
 
         btnBack.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -205,6 +206,14 @@ public class DetailMessageFragment extends Fragment {
                 Toast.makeText(getContext(), "Record deleted", Toast.LENGTH_SHORT);
             }
         });
+
+        btnviewResult.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                jsonTextView.setVisibility(View.VISIBLE);
+            }
+        });
+
         return view;
     }
 
