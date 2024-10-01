@@ -110,6 +110,7 @@ public class MainActivity extends AppCompatActivity {
                 } else {
                     // User checked "Don't ask again" or denied multiple times
                     Toast.makeText(this, "Permission to read SMS was denied permanently. Please enable it in app settings.", Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, "Permission >> Allow SMS Permission", Toast.LENGTH_LONG).show();
                     // Optionally, redirect the user to app settings
                     openAppSettings();
                 }
@@ -119,40 +120,14 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
-    private void checkNotificationPermission() {
-        if (!NotificationManagerCompat.from(this).areNotificationsEnabled()) {
-            // Notifications are not enabled
-            // Prompt the user to grant notification permission
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setTitle("Enable Notifications");
-            builder.setMessage("This app requires notification permission to function properly. Please enable it in settings.");
-            builder.setPositiveButton("Go to Settings", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    // Open app settings
-                    openNotificationSettings();
-                }
-            });
-            builder.setNegativeButton("Cancel", null);
-            builder.show();
-        } else {
-            // Notifications are enabled
-            // Proceed with your notification logic
-        }
-    }
 
-    private void openNotificationSettings() {
-        Intent intent = new Intent();
-        intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-        Uri uri = Uri.fromParts("package", getPackageName(), null);
-        intent.setData(uri);
-        startActivityForResult(intent, REQUEST_NOTIFICATION_PERMISSION);
-    }
     private void openAppSettings() {
         Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
         Uri uri = Uri.fromParts("package", getPackageName(), null);
         intent.setData(uri);
         startActivity(intent);
+        // Exit the app
+        finish();
     }
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {

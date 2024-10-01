@@ -140,6 +140,8 @@ public class SettingsFragment extends Fragment {
         Uri uri = Uri.fromParts("package", getContext().getPackageName(), null);
         intent.setData(uri);
         startActivity(intent);
+        // Exit the app after the settings screen opens
+        requireActivity().finish();
     }
 
     private void autoStartSettings() {
