@@ -1,5 +1,6 @@
 package com.example.smslinkchecker;
 
+import android.annotation.SuppressLint;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
@@ -75,12 +76,12 @@ public class DetailMessageFragment extends Fragment {
         }
     }
 
+    @SuppressLint("SetTextI18n")
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_detail_message, container, false);
-
         // Use mSender, mMessage, and mImage as needed
         TextView idTextView = view.findViewById(R.id.txtdetailID);
         TextView senderTextView = view.findViewById(R.id.txtdetailNumber);
@@ -168,10 +169,21 @@ public class DetailMessageFragment extends Fragment {
             }
         });
 
+        // Buttons
         Button btndelete = view.findViewById(R.id.btndelete);
         Button btnBack = view.findViewById(R.id.btnBack);
         Button btnviewResult = view.findViewById(R.id.btnviewResult);
+        Button btnDeleteSMS = view.findViewById(R.id.btnDeleteSMS);
 
+        btnDeleteSMS.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // In your Activity or Fragment where you want to show the dialog
+                String phoneNumber = mSender;
+                ImageDialogFragment imageDialog = ImageDialogFragment.newInstance(phoneNumber);
+                imageDialog.show(getChildFragmentManager(), "ImageDialog");
+            }
+        });
         btnBack.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

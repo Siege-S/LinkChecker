@@ -329,10 +329,12 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/linearLayout6" />
 
+
             <LinearLayout
                 android:id="@+id/linearLayout6"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:orientation="vertical"
                 android:layout_marginTop="12dp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="0.0"
@@ -340,36 +342,50 @@
                 app:layout_constraintTop_toBottomOf="@+id/linearLayout7">
 
                 <Button
-                    android:id="@+id/btnBack"
+                    android:id="@+id/btnDeleteSMS"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_margin="20dp"
-                    android:layout_weight="1"
-                    android:background="@color/PriOrange"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="20dp"
                     android:fontFamily="@font/poppins_semibold"
-                    android:text="Back"
-                    android:textAllCaps="false"
-                    android:textColor="@color/white"
-                    android:textSize="16sp"
-                    app:layout_constraintBottom_toTopOf="@+id/textView9"
-                    app:layout_constraintEnd_toStartOf="@+id/btndelete"
-                    app:layout_constraintHorizontal_bias="0.549"
-                    app:layout_constraintStart_toStartOf="parent" />
+                    android:text="Move to Spam / Delete SMS"
+                    android:textSize="16sp" />
+                
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
 
-                <Button
-                    android:id="@+id/btndelete"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_margin="20dp"
-                    android:layout_weight="1"
-                    android:background="#9D1912"
-                    android:fontFamily="@font/poppins_semibold"
-                    android:text="Delete"
-                    android:textAllCaps="false"
-                    android:textColor="@color/white"
-                    android:textSize="16sp"
-                    app:layout_constraintBottom_toTopOf="@+id/textView9"
-                    app:layout_constraintEnd_toEndOf="parent" />
+                    <Button
+                        android:id="@+id/btnBack"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_margin="20dp"
+                        android:layout_weight="1"
+                        android:background="@color/PriOrange"
+                        android:fontFamily="@font/poppins_semibold"
+                        android:text="Back"
+                        android:textAllCaps="false"
+                        android:textColor="@color/white"
+                        android:textSize="16sp"
+                        app:layout_constraintBottom_toTopOf="@+id/textView9"
+                        app:layout_constraintEnd_toStartOf="@+id/btndelete"
+                        app:layout_constraintHorizontal_bias="0.549"
+                        app:layout_constraintStart_toStartOf="parent" />
+
+                    <Button
+                        android:id="@+id/btndelete"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_margin="20dp"
+                        android:layout_weight="1"
+                        android:background="#9D1912"
+                        android:fontFamily="@font/poppins_semibold"
+                        android:text="Delete Result"
+                        android:textAllCaps="false"
+                        android:textColor="@color/white"
+                        android:textSize="16sp"
+                        app:layout_constraintBottom_toTopOf="@+id/textView9"
+                        app:layout_constraintEnd_toEndOf="parent" />
+                </LinearLayout>
 
             </LinearLayout>
 

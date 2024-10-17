@@ -164,6 +164,8 @@ public class SettingsFragment extends Fragment {
         } else {
             // Show a fallback message or open general settings if the specific Intent fails
             startActivity(new Intent(Settings.ACTION_SETTINGS));
+//            startActivity(new Intent(Settings.ACTION_SEARCH_SETTINGS));
+//            startActivity(new Intent(Settings.ACTION_MANAGE_APPLICATIONS_SETTINGS));
         }
     }
 }
