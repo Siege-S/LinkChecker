@@ -19,6 +19,7 @@ import androidx.fragment.app.FragmentTransaction;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import android.provider.Settings;
+import android.text.Layout;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -118,6 +119,17 @@ public class SettingsFragment extends Fragment {
                     openAppSettings();
                     switchPermission.setChecked(hasSmsPermission);
                 }
+            }
+        });
+        // Send Feedback
+        View layoutFeedback = view.findViewById(R.id.layoutFeedback);
+        layoutFeedback.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //Dialog Feedback
+                FeedbackDialogFragment feedbackDialog = new FeedbackDialogFragment();
+                feedbackDialog.show(getChildFragmentManager(), "feedbackDialog");
+
             }
         });
     }
