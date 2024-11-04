@@ -81,8 +81,8 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
                 holder.IV_analysis.setImageResource(R.drawable.warning_red);
             } else if (analysisResult.equals("2")) {
                 holder.txtAnalsis.setText("URL is Suspicious");
-                holder.txtAnalsis.setTextColor(ContextCompat.getColor(context, R.color.red));
-                holder.IV_analysis.setImageResource(R.drawable.warning_red);
+                holder.txtAnalsis.setTextColor(ContextCompat.getColor(context, R.color.darkyellow));
+                holder.IV_analysis.setImageResource(R.drawable.suspicious_icon);
             } else {
                 holder.txtAnalsis.setText("URL is Harmless");
                 holder.txtAnalsis.setTextColor(ContextCompat.getColor(context, R.color.green));

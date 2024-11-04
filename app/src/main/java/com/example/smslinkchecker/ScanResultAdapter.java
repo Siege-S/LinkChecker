@@ -32,6 +32,8 @@ public class ScanResultAdapter extends RecyclerView.Adapter<ScanResultAdapter.Vi
         holder.tvCategory.setText(result.getCategory());
         holder.tvResult.setText(result.getResult());
 
+        // Set the numbering
+        holder.tvCount.setText(String.valueOf(position + 1)); // Numbering starts at 1
         // Set color based on the result
         if (result.getResult().equalsIgnoreCase("clean") || result.getResult().equalsIgnoreCase("harmless")) {
             holder.tvCategory.setTextColor(Color.GREEN);
@@ -60,6 +62,7 @@ public class ScanResultAdapter extends RecyclerView.Adapter<ScanResultAdapter.Vi
         TextView tvMethod;
         TextView tvCategory;
         TextView tvResult;
+        TextView tvCount;
 
         public ViewHolder(View itemView) {
             super(itemView);
@@ -67,6 +70,7 @@ public class ScanResultAdapter extends RecyclerView.Adapter<ScanResultAdapter.Vi
             tvMethod = itemView.findViewById(R.id.tv_method);
             tvCategory = itemView.findViewById(R.id.tv_category);
             tvResult = itemView.findViewById(R.id.tv_result);
+            tvCount = itemView.findViewById(R.id.tv_count);
         }
     }
 }

@@ -19,6 +19,8 @@ import androidx.fragment.app.DialogFragment;
 
 public class FeedbackDialogFragment extends DialogFragment {
 
+    private static final String email = "linkguard0311@gmail.com";
+
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
@@ -80,7 +82,7 @@ public class FeedbackDialogFragment extends DialogFragment {
         // Create the email Intent
         Intent emailIntent = new Intent(Intent.ACTION_SEND);
         emailIntent.setType("message/rfc822");
-        emailIntent.putExtra(Intent.EXTRA_EMAIL, new String[]{"cjsfgods@gmail.com"});
+        emailIntent.putExtra(Intent.EXTRA_EMAIL, new String[]{email});
         emailIntent.putExtra(Intent.EXTRA_SUBJECT, subject);
         emailIntent.putExtra(Intent.EXTRA_TEXT, body);
 

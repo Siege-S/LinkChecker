@@ -52,6 +52,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -72,7 +73,7 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
         String jsonResponse = JSONResponse.get(position);
         byte[] imageBytes = imageURL.get(position);  // This is a byte array
 
-        DetailMessageFragment fragment = DetailMessageFragment.newInstance(id, sender, url, jsonResponse, imageBytes);
+        DetailMessageFragment_new fragment = DetailMessageFragment_new.newInstance(id, sender, url, jsonResponse, imageBytes);
         fragmentTransaction.replace(R.id.frame_layout, fragment);
         fragmentTransaction.addToBackStack(null);
         fragmentTransaction.commit();
@@ -100,13 +101,13 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
     Spinner spin_Result;
     View layoutSpinnerButton;
     View layoutOfflineProcess;
+    View layoutProcessText;
     Button btnScanOffline;
     Button btnRemoveItem;
     Spinner spin_url;
     ImageView internet;
     TextView txtInternet;
     TextView txtDetectedURL;
-    TextView txtProcessText;
     public MessageFragment() {
         // Required empty public constructor
     }
@@ -170,10 +171,10 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
         internet = view.findViewById(R.id.IV_Internet);
         txtInternet = view.findViewById(R.id.txtInternet);
         layoutOfflineProcess = view.findViewById(R.id.layoutOfflineProcess);
+        layoutProcessText = view.findViewById(R.id.layoutProcessText);
         layoutSpinnerButton = view.findViewById(R.id.layoutSpinnerButton);
         txtDetectedURL = view.findViewById(R.id.txtDetectedURL);
-        txtProcessText = view.findViewById(R.id.txtProcessText);
-        txtProcessText.setVisibility(View.GONE);
+        layoutProcessText.setVisibility(View.GONE);
         int count = dbHelper.getOfflineDataCount();
         txtDetectedURL.setText("When Offline LinkGuard Detected "+ count + " URL");
         if(count == 0){
@@ -233,6 +234,7 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
                         int count = dbHelper.getOfflineDataCount();
                         txtDetectedURL.setText("When Offline LinkGuard Detected "+ count + " URL");
                         if(count == 0){
+                            refreshData();
                             layoutSpinnerButton.setVisibility(View.GONE);
                         } else {
                             layoutSpinnerButton.setVisibility(View.VISIBLE);
@@ -256,11 +258,15 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
             @Override
             public void onClick(View v) {
                 Context context = getContext();
-                txtProcessText.setVisibility(View.VISIBLE);
+                layoutProcessText.setVisibility(View.VISIBLE);
                 processOfflineData(context);
                 btnScanOffline.setEnabled(false);
                 btnRemoveItem.setEnabled(false);
                 Toast.makeText(getContext(), "Please wait while LinkGuard is processing the data", Toast.LENGTH_LONG).show();
+
+                if (getActivity() instanceof MainActivity) {
+                    ((MainActivity) getActivity()).setBottomNavigationEnabled(false);
+                }
             }
         }); // Offline Feature
 
@@ -355,81 +361,116 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
     private void processOfflineData(Context context) {
         DBHelper dbHelper = new DBHelper(context);
         Cursor cursor = dbHelper.getOfflineData();
-        if (cursor != null && cursor.moveToFirst()) {
-            int urlIndex = cursor.getColumnIndex("url");
-            int senderIndex = cursor.getColumnIndex("sender");
-            int idIndex = cursor.getColumnIndex("id");
 
-            if (urlIndex != -1 && idIndex != -1) {
-                do {
-                    SmsListener smsListener = new SmsListener();
-                    String url = cursor.getString(urlIndex);
-                    String sender = cursor.getString(senderIndex);
-                    int id = cursor.getInt(idIndex);
+        if (cursor != null) {
+            int totalUrls = cursor.getCount();  // Total number of URLs to process
+            final AtomicInteger remainingUrls = new AtomicInteger(totalUrls);
 
-                    // Process the data asynchronously
-                    ExecutorService executorService = Executors.newSingleThreadExecutor();
-                    executorService.execute(() -> {
-                        try {
-                            String apiUrl = smsListener.SnapshotmachineAPI(url);
-                            String analysisId = smsListener.processUrls(context, url);
+            if (cursor.moveToFirst()) {
+                int urlIndex = cursor.getColumnIndex("url");
+                int senderIndex = cursor.getColumnIndex("sender");
+                int idIndex = cursor.getColumnIndex("id");
 
-                            if (analysisId != null) {
-                                String analysisResultJSON = smsListener.getAnalysis(analysisId);
+                if (urlIndex != -1 && idIndex != -1) {
+                    do {
+                        SmsListener smsListener = new SmsListener();
+                        String url = cursor.getString(urlIndex);
+                        String sender = cursor.getString(senderIndex);
+                        int id = cursor.getInt(idIndex);
 
-                                if (analysisResultJSON != null) {
-                                    InputStream in = new URL(apiUrl).openStream();
-                                    Bitmap bitmap = BitmapFactory.decodeStream(in);
-                                    byte[] image = smsListener.getBitmapAsByteArray(bitmap);
+                        ExecutorService executorService = Executors.newSingleThreadExecutor();
+                        executorService.execute(() -> {
+                            try {
+                                String apiUrl = smsListener.SnapshotmachineAPI(url);
+                                String analysisId = smsListener.processUrls(context, url);
 
-                                    // Post UI changes to the main thread
+                                if (analysisId != null) {
+                                    String analysisResultJSON = smsListener.getAnalysis(analysisId);
+
+                                    if (analysisResultJSON != null) {
+                                        InputStream in = new URL(apiUrl).openStream();
+                                        Bitmap bitmap = BitmapFactory.decodeStream(in);
+                                        byte[] image = smsListener.getBitmapAsByteArray(bitmap);
+
+                                        new Handler(Looper.getMainLooper()).post(() -> {
+                                            String analysis = smsListener.NotifyResult(context, url, analysisResultJSON);
+                                            dbHelper.insertData(url, sender, apiUrl, analysis, image, analysisResultJSON);
+                                            dbHelper.deleteRecordById(id);
+
+                                            // Enable buttons and Bottom Navigation
+                                            btnScanOffline.setEnabled(true);
+                                            btnRemoveItem.setEnabled(true);
+                                            layoutOfflineProcess.setVisibility(View.GONE);
+
+                                            // Decrement the remaining URLs count
+                                            if (remainingUrls.decrementAndGet() == 0) {
+                                                if (getActivity() instanceof MainActivity) {
+                                                    ((MainActivity) getActivity()).setBottomNavigationEnabled(true);
+                                                }
+                                                refreshData(); // Call refreshData when all URLs are processed
+                                            }
+                                        });
+                                    }
+                                } else {
+                                    // Failure case
                                     new Handler(Looper.getMainLooper()).post(() -> {
-                                        String analysis = smsListener.NotifyResult(context, url, analysisResultJSON);
-                                        dbHelper.insertData(url, sender, apiUrl, analysis, image, analysisResultJSON);
-
-                                        // After processing, delete the record by its ID
-                                        dbHelper.deleteRecordById(id);
                                         btnScanOffline.setEnabled(true);
                                         btnRemoveItem.setEnabled(true);
-                                        layoutOfflineProcess.setVisibility(View.GONE); // Hide layout if successful
+                                        if (getActivity() instanceof MainActivity) {
+                                            ((MainActivity) getActivity()).setBottomNavigationEnabled(true);
+                                        }
+
+                                        if (remainingUrls.decrementAndGet() == 0) {
+                                            refreshData();
+                                        }
                                     });
                                 }
-                            } else {
-                                // Post failure UI changes to the main thread
+                            } catch (IOException | NoSuchAlgorithmException e) {
                                 new Handler(Looper.getMainLooper()).post(() -> {
                                     btnScanOffline.setEnabled(true);
                                     btnRemoveItem.setEnabled(true);
+                                    if (getActivity() instanceof MainActivity) {
+                                        ((MainActivity) getActivity()).setBottomNavigationEnabled(true);
+                                    }
+
+                                    if (remainingUrls.decrementAndGet() == 0) {
+                                        refreshData();
+                                    }
                                 });
+                                Log.e("SmsListener", "Error: " + e.getMessage());
+                            } catch (JSONException e) {
+                                new Handler(Looper.getMainLooper()).post(() -> {
+                                    btnScanOffline.setEnabled(true);
+                                    btnRemoveItem.setEnabled(true);
+                                    if (getActivity() instanceof MainActivity) {
+                                        ((MainActivity) getActivity()).setBottomNavigationEnabled(true);
+                                    }
+
+                                    if (remainingUrls.decrementAndGet() == 0) {
+                                        refreshData();
+                                    }
+                                });
+                                throw new RuntimeException(e);
+                            } finally {
+                                executorService.shutdown();
                             }
-                        } catch (IOException | NoSuchAlgorithmException e) {
-                            // Post failure UI changes to the main thread
-                            new Handler(Looper.getMainLooper()).post(() -> {
-                                btnScanOffline.setEnabled(true);
-                                btnRemoveItem.setEnabled(true);
-                            });
-                            Log.e("SmsListener", "Error: " + e.getMessage());
-                        } catch (JSONException e) {
-                            new Handler(Looper.getMainLooper()).post(() -> {
-                                btnScanOffline.setEnabled(true);
-                                btnRemoveItem.setEnabled(true);
-                            });
-                            throw new RuntimeException(e);
-                        } finally {
-                            executorService.shutdown();
-                        }
-                    });
-                } while (cursor.moveToNext());
+                        });
+                    } while (cursor.moveToNext());
+                }
             }
-            cursor.close(); // Close the cursor when done
+            cursor.close();
         } else {
-            // Post UI changes to the main thread if cursor is null or empty
             new Handler(Looper.getMainLooper()).post(() -> {
                 btnScanOffline.setEnabled(true);
                 btnRemoveItem.setEnabled(true);
+                if (getActivity() instanceof MainActivity) {
+                    ((MainActivity) getActivity()).setBottomNavigationEnabled(true);
+                }
             });
             Log.e("Error", "Cursor is null or empty");
         }
     }
+
 
     private void refreshData() {
 //        FragmentManager fragmentManager = getActivity().getSupportFragmentManager();

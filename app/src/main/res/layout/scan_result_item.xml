@@ -2,7 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@color/FragmentBackgroundColor"
+    android:background="@color/PrimaryBlue"
     android:gravity="center_vertical"
     android:orientation="vertical"
     >
@@ -11,11 +11,22 @@
         android:layout_height="wrap_content" >
 
         <TextView
+            android:id="@+id/tv_count"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight=".5"
+            android:fontFamily="@font/poppins_bold"
+            android:gravity="center"
+            android:padding="8dp"
+            android:textAlignment="center"
+            android:textColor="@color/white"
+            android:textSize="14sp" />
+
+        <TextView
             android:id="@+id/tv_engine_name"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:layout_weight="1"
-            android:background="@drawable/shape_container_white"
             android:fontFamily="@font/poppins_semibold"
             android:gravity="center"
             android:padding="8dp"
@@ -31,7 +42,6 @@
             android:visibility="gone"
             android:gravity="center"
             android:layout_weight="1"
-            android:background="@drawable/shape_container_white"
             android:padding="8dp"
             android:text="Method"
             android:textAlignment="center"
@@ -43,7 +53,6 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:background="@drawable/shape_container_white"
             android:fontFamily="@font/poppins_semibold"
             android:gravity="center"
             android:padding="8dp"
@@ -57,7 +66,6 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:background="@drawable/shape_container_white"
             android:fontFamily="@font/poppins_semibold"
             android:gravity="center"
             android:padding="8dp"

@@ -1,5 +1,12 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
+}
+
+// Load properties from local.properties
+val properties = Properties().apply {
+    load(project.rootProject.file("local.properties").inputStream())
 }
 
 android {
@@ -14,6 +21,14 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Reading the API keys from local.properties
+        // Accessing the API keys
+        val vtApiKey = properties.getProperty("VT_API_KEY", "")
+        buildConfigField("String", "VT_API_KEY", "\"$vtApiKey\"")
+
+        val ssApiKey = properties.getProperty("SS_API_KEY", "")
+        buildConfigField("String", "SS_API_KEY", "\"$ssApiKey\"")
     }
 
     buildTypes {
@@ -26,6 +41,7 @@ android {
         }
     }
     buildFeatures {
+        buildConfig = true
         viewBinding = true
     }
     compileOptions {

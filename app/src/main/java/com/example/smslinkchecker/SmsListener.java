@@ -57,8 +57,8 @@ import org.json.JSONObject;
 public class SmsListener extends BroadcastReceiver {
     private static final String CHANNEL_ID = "1001";
     private static final int NOTIFICATION_ID = 123;
-    private static final String API_KEY = "d2a66c9f38303515894f1721ed3aaf695f9ec0eb6ab81c000ef3b4aa228bad94";
-
+    private static final String API_KEY = BuildConfig.VT_API_KEY;
+    private static final String ss_API_KEY = BuildConfig.SS_API_KEY;
     private static final int POLLING_INTERVAL_MS = 10000; // 10 seconds
 
     @Override
@@ -287,7 +287,7 @@ public class SmsListener extends BroadcastReceiver {
 
     public String SnapshotmachineAPI(String url) throws UnsupportedEncodingException, NoSuchAlgorithmException {
         // Call ScreenshotMachine API
-        String customerKey = "e83172"; // 990acf // e83172
+        String customerKey = ss_API_KEY;
         String secretPhrase = ""; // leave secret phrase empty if not needed
         ScreenshoMachine sm = new ScreenshoMachine(customerKey, secretPhrase);
         Map<String, String> options = new HashMap<>();

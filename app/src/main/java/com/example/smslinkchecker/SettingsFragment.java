@@ -87,21 +87,6 @@ public class SettingsFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
-        Button btnAutoStart = view.findViewById(R.id.btnAutoStart);
-        Button btnNotification = view.findViewById(R.id.btnNotification);
-        btnAutoStart.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                autoStartSettings();
-            }
-        });
-        btnNotification.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                openNotificationSettings();
-            }
-        });
         switchPermission = view.findViewById(R.id.switchPermission);
 
         // Check current permission status and update the switch state
@@ -123,6 +108,8 @@ public class SettingsFragment extends Fragment {
         });
         // Send Feedback
         View layoutFeedback = view.findViewById(R.id.layoutFeedback);
+        View layoutNotification = view.findViewById(R.id.layoutNotification);
+        View layoutAutoStart = view.findViewById(R.id.layoutAutoStart);
         layoutFeedback.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -132,7 +119,20 @@ public class SettingsFragment extends Fragment {
 
             }
         });
+        layoutNotification.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                openNotificationSettings();
+            }
+        });
+        layoutAutoStart.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                autoStartSettings();
+            }
+        });
     }
+
     private void openNotificationSettings() {
         Intent intent = new Intent();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

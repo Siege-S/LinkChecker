@@ -3,6 +3,7 @@ package com.example.smslinkchecker;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
@@ -59,11 +60,29 @@ public class MainActivity extends AppCompatActivity {
             return true;
         });
 
+        // Check if the code has already run (delete this after)
+//        SharedPreferences prefs = getSharedPreferences("MyAppPreferences", MODE_PRIVATE);
+//        boolean hasRunBefore = prefs.getBoolean("hasInsertedData", false);
+//
+//        if (!hasRunBefore) {
+//            // Run the code you want to execute only once
+//            DBHelper db = new DBHelper(this);
+//            db.insertOfflineTbl("ogpe.cc", "sieger");
+//            db.insertOfflineTbl("google.com", "sieger");
+//
+//            // Mark that the code has run
+//            SharedPreferences.Editor editor = prefs.edit();
+//            editor.putBoolean("hasInsertedData", true);
+//            editor.apply();
+//        }
+
         getWindow().getDecorView().setSystemUiVisibility(
-                        View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION |
-                        View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
-                        View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                View.SYSTEM_UI_FLAG_FULLSCREEN |
+                View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION |
+                View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
+                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
         );
+
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -137,6 +156,12 @@ public class MainActivity extends AppCompatActivity {
             if (NotificationManagerCompat.from(this).areNotificationsEnabled()) {
                 // Notification permission granted, proceed with your notification logic
             }
+        }
+    }
+    public void setBottomNavigationEnabled(boolean enabled) {
+        for (int i = 0; i < binding.bottomNavigationView.getMenu().size(); i++) {
+            binding.bottomNavigationView.getMenu().getItem(i).setEnabled(enabled);
+
         }
     }
 

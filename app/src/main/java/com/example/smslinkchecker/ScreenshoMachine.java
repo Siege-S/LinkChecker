@@ -8,7 +8,7 @@ import java.util.Map;
 
 public class ScreenshoMachine {
 
-    private String customerKey = "990acf";
+    private String customerKey;
     private String secretPhrase;
     private String apiBaseUrl = "https://api.screenshotmachine.com/?";
     private String pdfApiBaseUrl = "https://pdfapi.screenshotmachine.com/?";
