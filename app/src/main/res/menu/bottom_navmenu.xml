@@ -10,10 +10,10 @@
         android:icon="@drawable/baseline_message_24"
         android:title="Scanned SMS" />
 
-<!--    <item-->
-<!--        android:id="@+id/contacts"-->
-<!--        android:icon="@drawable/info"-->
-<!--        android:title="Contacts" />-->
+    <item
+        android:id="@+id/scan"
+        android:icon="@drawable/search"
+        android:title="Scan SMS" />
 
     <item
         android:id="@+id/settings"

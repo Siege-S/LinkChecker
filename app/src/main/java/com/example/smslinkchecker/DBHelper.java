@@ -186,7 +186,7 @@ public class DBHelper extends SQLiteOpenHelper {
 
 
 
-    public Cursor getOldRecords(){
+    public Cursor scannedURLS(){
         SQLiteDatabase DB = this.getReadableDatabase();
         Cursor cursor = DB.rawQuery("SELECT * FROM urlmessagestbl", null);
         return cursor;

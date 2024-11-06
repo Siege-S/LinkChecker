@@ -6,11 +6,11 @@
     <string name="Intro_Linkguard">LinkGuard is an Android app that detects SMS messages with links, captures a snapshot of the link, and swiftly analyzes it for potential smishing threats and malicious activity, ensuring your protection</string>
 
     <string-array name="linkguard_Result">
-            <item>All</item>
-            <item>Harmless</item>
-            <item>Malicious</item>
-            <item>Suspicious</item>
-            <item>Malicious and Suspicious</item>
+        <item>All</item>
+        <item>Harmless</item>
+        <item>Malicious</item>
+        <item>Suspicious</item>
+        <item>Malicious and Suspicious</item>
     </string-array>
 
     <string-array name="linkguard_Date">
