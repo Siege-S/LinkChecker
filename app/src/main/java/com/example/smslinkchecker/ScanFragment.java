@@ -21,6 +21,7 @@ import android.widget.Button;
 import android.Manifest;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -90,8 +91,6 @@ public class ScanFragment extends Fragment {
 
         // Initialize the RecyclerView
         RecyclerView rvDetectedURL = view.findViewById(R.id.rvDetectedURL);
-        ScanFragmentListAdapter adapter = new ScanFragmentListAdapter(newDetectedURL);
-        rvDetectedURL.setAdapter(adapter);
         rvDetectedURL.setLayoutManager(new LinearLayoutManager(getContext()));
 
         // Initialize the button
@@ -124,16 +123,12 @@ public class ScanFragment extends Fragment {
                     System.out.println("Detected URL on SMS: " + detectedURL);
                     System.out.println("Detected URL size: " + detectedURL.size()); // Add Details on detected URL size
 
-                    ArrayList<String> scannedURL = getScannedLinks();
-                    newDetectedURL = new ArrayList<>(detectedURL);
-                    newDetectedURL.removeAll(scannedURL);
-                    System.out.println("Detected URL after removing scanned URL: " + newDetectedURL + ", Size: " + newDetectedURL.size());
-
-                    // Update the adapter's data
-                    adapter.updateData(newDetectedURL);
+                    ArrayList<String> rvFilteredList = updateScannedLinks(detectedURL);
+                    ScanFragmentListAdapter adapter = new ScanFragmentListAdapter(rvFilteredList);
+                    rvDetectedURL.setAdapter(adapter);
+                    adapter.notifyDataSetChanged();
                     cursor.close();
                 }
-
             } else {
                 requestSMSPermissions();
             }
@@ -162,5 +157,30 @@ public class ScanFragment extends Fragment {
             cursor.close();
         }
         return urls;
+    }
+
+    private ArrayList<String> updateScannedLinks(ArrayList<String> detectedURL) { // remove already scanned URLS
+        DBHelper db = new DBHelper(getContext());
+        Cursor cursor = db.scannedURLS();
+        ArrayList<String> scannedURL = new ArrayList<>();
+        if(cursor != null) {
+            while(cursor.moveToNext()) {
+                String url = cursor.getString(1); // DBHelper column 1 is the URL
+                scannedURL.add(url);
+            }
+            System.out.println("Scanned URLs: " + scannedURL);
+            cursor.close();
+        } else {
+            System.out.println("(getScannedLinks) Cursor is null");
+            cursor.close();
+        }
+        ArrayList<String> newDetectedURL = new ArrayList<>(detectedURL);
+        newDetectedURL.removeAll(scannedURL);
+        System.out.println("Detected URL after removing scanned URL: " + newDetectedURL + ", Size: " + newDetectedURL.size());
+
+        // Use Hashset to remove duplicates
+        newDetectedURL = new ArrayList<>(new HashSet<>(newDetectedURL));
+
+        return newDetectedURL;
     }
 }
