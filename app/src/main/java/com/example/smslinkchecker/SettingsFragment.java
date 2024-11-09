@@ -110,6 +110,8 @@ public class SettingsFragment extends Fragment {
         View layoutFeedback = view.findViewById(R.id.layoutFeedback);
         View layoutNotification = view.findViewById(R.id.layoutNotification);
         View layoutAutoStart = view.findViewById(R.id.layoutAutoStart);
+        View layoutPermission = view.findViewById(R.id.layoutPermission);
+
         layoutFeedback.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -129,6 +131,13 @@ public class SettingsFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 autoStartSettings();
+            }
+        });
+        layoutPermission.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(getContext(), "User must manually disable SMS permissions.", Toast.LENGTH_SHORT).show();
+                openAppSettings();
             }
         });
     }

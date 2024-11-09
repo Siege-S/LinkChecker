@@ -141,15 +141,19 @@ public class SmsListener extends BroadcastReceiver {
                                                 }
                                             } else {
                                                 showRetryNotification(context, url, finalMsg_from);
-                                                System.out.println("Failed to scan URL.");
+                                                Log.e("Error", "Failed to processURL result.");
                                             }
                                         } catch (IOException e) {
                                             System.out.println("Error in VirusTotal:" + e.getMessage());
                                             showRetryNotification(context, url,finalMsg_from);
                                             e.printStackTrace();
                                         } catch (NoSuchAlgorithmException e) {
+                                            Log.e("Error", "Failed to scan URL.");
+                                            showRetryNotification(context, url,finalMsg_from);
                                             throw new RuntimeException(e);
                                         } catch (JSONException e) {
+                                            Log.e("VirusTotal Error", e.getMessage(), e);
+                                            showRetryNotification(context, url,finalMsg_from);
                                             throw new RuntimeException(e);
                                         }
                                     });
@@ -161,6 +165,7 @@ public class SmsListener extends BroadcastReceiver {
                         }
                     }
                 } catch (Exception e) {
+                    Log.e("SMS Processing Error", e.getMessage(), e);
                     e.printStackTrace();
                 }
             }
@@ -296,7 +301,7 @@ public class SmsListener extends BroadcastReceiver {
         options.put("device", "desktop");
         options.put("format", "png");
         options.put("cacheLimit", "0");
-        options.put("delay", "10000"); // 10 seconds
+        options.put("delay", "8000"); // 10 seconds
         options.put("zoom", "100");
 
         String apiUrl = sm.generateScreenshotApiUrl(options);
