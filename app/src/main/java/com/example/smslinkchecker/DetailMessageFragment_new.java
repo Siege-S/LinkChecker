@@ -64,6 +64,8 @@ public class DetailMessageFragment_new extends Fragment {
     private List<ScanResult> scanResults;
     private ScanResultAdapter adapter;
 
+    Button btnDeleteSMS;
+    ProgressBar circularProgressBar;
     public DetailMessageFragment_new() {
         // Required empty public constructor
     }
@@ -155,29 +157,30 @@ public class DetailMessageFragment_new extends Fragment {
 //            jsonTextView.setText(results.toString(4));
 
             // Virustotal stats
-            ProgressBar circularProgressBar = view.findViewById(R.id.circularProgressBar);
+            circularProgressBar = view.findViewById(R.id.circularProgressBar);
             TextView progressText = view.findViewById(R.id.progressText);
             TextView txtanalysis = view.findViewById(R.id.txtAnalysis);
             TextView txtAnalysis2 = view.findViewById(R.id.txtAnalysis2);
             ImageView IV_analysis = view.findViewById(R.id.IV_analysis);
+            btnDeleteSMS = view.findViewById(R.id.btnDeleteSMS);
 
             int malicious = jsonObject.getJSONObject("data").getJSONObject("attributes").getJSONObject("stats").getInt("malicious");
             int suspicious = jsonObject.getJSONObject("data").getJSONObject("attributes").getJSONObject("stats").getInt("suspicious");
 
             if(malicious > 0){
                 txtanalysis.setText(malicious + " security vendors flagged this URL as malicious");
-                txtAnalysis2.setText(malicious + " Threat found");
+                txtAnalysis2.setText(malicious + " Threat\nfound");
                 txtanalysis.setTextColor(getResources().getColor(R.color.red));
                 txtAnalysis2.setTextColor(getResources().getColor(R.color.red));
                 progressText.setTextColor(getResources().getColor(R.color.red));
                 IV_analysis.setImageResource(R.drawable.warning_red);
-
+                btnDeleteSMS.setBackground(getResources().getDrawable(R.drawable.custom_button4));
                 // Update progress and text
                 circularProgressBar.setProgress(malicious);
                 progressText.setText(malicious + " / 96");
             } else if (suspicious > 0){
                 txtanalysis.setText(suspicious + " security vendors flagged this URL as suspicious");
-                txtAnalysis2.setText("URL is suspicious");
+                txtAnalysis2.setText("URL is\nsuspicious");
                 txtanalysis.setTextColor(getResources().getColor(R.color.yellow));
                 txtAnalysis2.setTextColor(getResources().getColor(R.color.yellow));
                 progressText.setTextColor(getResources().getColor(R.color.yellow));
@@ -188,7 +191,7 @@ public class DetailMessageFragment_new extends Fragment {
                 progressText.setText(suspicious + " / 96");
             } else {
                 txtanalysis.setText("No security vendors flagged this URL as malicious");
-                txtAnalysis2.setText("URL is safe");
+                txtAnalysis2.setText("URL is\nsafe");
                 txtanalysis.setTextColor(getResources().getColor(R.color.green));
                 txtAnalysis2.setTextColor(getResources().getColor(R.color.green));
                 progressText.setTextColor(getResources().getColor(R.color.green));
@@ -216,7 +219,6 @@ public class DetailMessageFragment_new extends Fragment {
         // Buttons
         Button btndelete = view.findViewById(R.id.btndelete);
         Button btnBack = view.findViewById(R.id.btnBack);
-        Button btnDeleteSMS = view.findViewById(R.id.btnDeleteSMS);
 
         btnDeleteSMS.setOnClickListener(new View.OnClickListener() {
             @Override

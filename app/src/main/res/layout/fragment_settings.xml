@@ -29,7 +29,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginLeft="20dp"
-            android:layout_marginTop="50dp"
+            android:layout_marginTop="80dp"
             android:fontFamily="@font/poppins_extrabold"
             android:text="Settings"
             android:textColor="@color/light_gray"
@@ -93,7 +93,7 @@
                     android:textColor="#969696" />
 
                 <LinearLayout
-                    android:id="@+id/linearLayout3"
+                    android:id="@+id/layoutPermission"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:background="@drawable/shape_container_settings"

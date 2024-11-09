@@ -21,12 +21,14 @@
                 android:id="@+id/IV_detailImage"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:scaleType="fitXY"
+                app:layout_constraintBottom_toTopOf="@+id/layoutParent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.0"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
             <LinearLayout
+                android:id="@+id/layoutParent"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
@@ -108,11 +110,9 @@
                         >
 
                         <RelativeLayout
-                            android:layout_width="120dp"
-                            android:layout_height="120dp">
-
+                            android:layout_width="100dp"
+                            android:layout_height="100dp">
                             <!-- Circular Progress Bar -->
-
                             <!-- Text inside the Progress Bar -->
                             <ProgressBar
                                 android:id="@+id/circularProgressBar"
@@ -133,20 +133,21 @@
                                 android:gravity="center"
                                 android:text="0 / 96"
                                 android:textColor="@color/Unselected"
-                                android:textSize="24sp" />
+                                android:textSize="18sp" />
 
                         </RelativeLayout>
 
 
                         <TextView
                             android:id="@+id/txtAnalysis2"
-                            android:layout_width="120dp"
-                            android:layout_height="wrap_content"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
                             android:fontFamily="@font/poppins_semibold"
                             android:text="Analysis"
                             android:textAlignment="center"
+                            android:textAllCaps="false"
                             android:textColor="@color/white"
-                            android:textSize="15sp" />
+                            android:textSize="16sp" />
                     </LinearLayout>
 
                     <LinearLayout
@@ -165,20 +166,20 @@
 
                             <ImageView
                                 android:id="@+id/IV_analysis"
-                                android:layout_width="50dp"
-                                android:layout_height="50dp"
-                                android:layout_marginRight="12dp"
+                                android:layout_width="40dp"
+                                android:layout_height="40dp"
+                                android:layout_marginRight="8dp"
                                 />
 
                             <TextView
                                 android:id="@+id/txtAnalysis"
-                                android:layout_width="wrap_content"
+                                android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:fontFamily="@font/poppins_semibold"
                                 android:text="Analysis"
                                 android:textAlignment="center"
                                 android:textColor="@color/white"
-                                android:textSize="16sp" />
+                                android:textSize="14sp" />
                         </LinearLayout>
 
                         <LinearLayout
@@ -192,13 +193,13 @@
                                 android:id="@+id/btnDeleteSMS"
                                 android:layout_width="match_parent"
                                 android:layout_height="match_parent"
-                                android:background="@drawable/custom_button4"
+                                android:background="@drawable/custom_button3"
                                 android:fontFamily="@font/poppins_semibold"
                                 android:text="Move to Spam / Delete SMS"
                                 android:textAlignment="center"
                                 android:textAllCaps="false"
                                 android:textColor="@color/light_gray"
-                                android:textSize="14sp" />
+                                android:textSize="13sp" />
                         </LinearLayout>
                     </LinearLayout>
                 </LinearLayout>

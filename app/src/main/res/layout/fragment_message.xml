@@ -91,6 +91,7 @@
                     android:id="@+id/layoutProcessText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:paddingHorizontal="15dp"
                     android:orientation="vertical"
                     android:gravity="center">
 
@@ -98,11 +99,12 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:fontFamily="@font/poppins_regular"
+                        android:paddingTop="15dp"
                         android:paddingHorizontal="15dp"
                         android:text="During the process navigation and buttons are disabled"
                         android:textAlignment="center"
                         android:textColor="@color/Unselected"
-                        android:textSize="12sp">
+                        android:textSize="14sp">
 
                     </TextView>
                     <LinearLayout
@@ -118,11 +120,11 @@
                             android:gravity="center"
                             android:text="LinkGuard is processing the data"
                             android:textColor="@color/Unselected"
-                            android:textSize="16sp" />
+                            android:textSize="18sp" />
 
                         <ProgressBar
                             android:layout_width="wrap_content"
-                            android:layout_height="wrap_content" />
+                            android:layout_height="match_parent" />
                     </LinearLayout>
 
                 </LinearLayout>
@@ -132,7 +134,7 @@
             </LinearLayout>
 
             <LinearLayout
-                android:id="@+id/linearLayout9"
+                android:id="@+id/layoutSortFilter"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@color/PrimaryBlue"
@@ -144,7 +146,7 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="40dp"
+                    android:layout_marginTop="35dp"
                     >
 
                     <TextView
@@ -187,12 +189,15 @@
                         android:entries="@array/linkguard_Result"
                         android:spinnerMode="dropdown" />
                 </LinearLayout>
+
+
             </LinearLayout>
 
             <ImageView
                 android:id="@+id/IV_Internet"
                 android:layout_width="match_parent"
                 android:layout_height="224dp"
+                android:paddingTop="20dp"
                 android:background="@color/SecondaryBLue"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
@@ -213,7 +218,6 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/IV_Internet" />
 
-
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/RV_Messages"
                 android:layout_width="match_parent"
@@ -223,7 +227,7 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="1.0"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/linearLayout9" />
+                app:layout_constraintTop_toBottomOf="@+id/layoutSortFilter" />
 
             <TextView
                 android:id="@+id/txtdata"
@@ -237,7 +241,7 @@
                 android:textSize="24sp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/linearLayout9" />
+                app:layout_constraintTop_toBottomOf="@+id/layoutSortFilter" />
         </androidx.constraintlayout.widget.ConstraintLayout>
 
 

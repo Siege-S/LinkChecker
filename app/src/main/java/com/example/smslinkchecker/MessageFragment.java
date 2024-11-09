@@ -8,10 +8,15 @@ import android.content.Context;
 import android.content.Intent;
 
 import androidx.core.app.NotificationCompat;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.RenderEffect;
+import android.graphics.Shader;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
@@ -102,6 +107,7 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
     View layoutSpinnerButton;
     View layoutOfflineProcess;
     View layoutProcessText;
+    View layoutSortFilter;
     Button btnScanOffline;
     Button btnRemoveItem;
     Spinner spin_url;
@@ -165,7 +171,6 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
         adapter = new MyAdapter(getContext(), ID, Sender, URL,JSONResponse, imageURL, Date, Analysis, this);
         recyclerView.setAdapter(adapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-//      displayData();
 
         // Check internet connection
         internet = view.findViewById(R.id.IV_Internet);
@@ -173,6 +178,7 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
         layoutOfflineProcess = view.findViewById(R.id.layoutOfflineProcess);
         layoutProcessText = view.findViewById(R.id.layoutProcessText);
         layoutSpinnerButton = view.findViewById(R.id.layoutSpinnerButton);
+        layoutSortFilter = view.findViewById(R.id.layoutSortFilter);
         txtDetectedURL = view.findViewById(R.id.txtDetectedURL);
         layoutProcessText.setVisibility(View.GONE);
         int count = dbHelper.getOfflineDataCount();
@@ -214,7 +220,6 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         // Set the adapter to the spinner
         spin_url.setAdapter(adapter);
-
         spin_url.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
@@ -229,7 +234,7 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
 
                         // Reload the Spinner data after deletion
                         List<String> updatedUrls = dbHelper.getOfflineUrls(); // Implement this to fetch URLs again
-                        ArrayAdapter<String> newAdapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item, updatedUrls);
+                        ArrayAdapter<String> newAdapter = new ArrayAdapter<>(getContext(), simple_spinner_item, updatedUrls);
                         newAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
                         int count = dbHelper.getOfflineDataCount();
                         txtDetectedURL.setText("When Offline LinkGuard Detected "+ count + " URL");
@@ -258,15 +263,24 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
             @Override
             public void onClick(View v) {
                 Context context = getContext();
-                layoutProcessText.setVisibility(View.VISIBLE);
-                processOfflineData(context);
+                // Disable while OfflineScanning is in progress
                 btnScanOffline.setEnabled(false);
                 btnRemoveItem.setEnabled(false);
+                spin_Date.setEnabled(false);
+                spin_Result.setEnabled(false);
+                layoutProcessText.setVisibility(View.VISIBLE); // yung umiikot
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    recyclerView.setRenderEffect(RenderEffect.createBlurEffect(30, 30, Shader.TileMode.MIRROR));
+                    layoutSortFilter.setRenderEffect(RenderEffect.createBlurEffect(10, 10, Shader.TileMode.MIRROR));
+                }
+                // true to disable touch events
+                recyclerView.setOnTouchListener((view, event) -> true);
                 Toast.makeText(getContext(), "Please wait while LinkGuard is processing the data", Toast.LENGTH_LONG).show();
 
                 if (getActivity() instanceof MainActivity) {
                     ((MainActivity) getActivity()).setBottomNavigationEnabled(false);
                 }
+                processOfflineData(context);
             }
         }); // Offline Feature
 
@@ -325,7 +339,10 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
     }
 
     private void updateRecyclerView(Cursor cursor) {
+        if (getView() == null) return; // Check if the fragment's view is available
+
         TextView txtdata = getView().findViewById(R.id.txtdata);
+
         // Clear previous data to avoid duplication
         ID.clear();
         Sender.clear();
@@ -344,10 +361,10 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
                     ID.add(cursor.getString(0));           // Column 0: ID
                     Sender.add(cursor.getString(2));       // Column 2: Sender
                     URL.add(cursor.getString(1));          // Column 1: URL
-                    JSONResponse.add(cursor.getString(6)); // Column 7: JSONResponse
-                    imageURL.add(cursor.getBlob(5));       // Column 6: ImageURL
-                    Date.add(cursor.getString(7));         // Column 8: Timestamp
-                    Analysis.add(cursor.getString(4));     // Column 9: Analysis
+                    JSONResponse.add(cursor.getString(6)); // Column 6: JSONResponse
+                    imageURL.add(cursor.getBlob(5));       // Column 5: ImageURL
+                    Date.add(cursor.getString(7));         // Column 7: Timestamp
+                    Analysis.add(cursor.getString(4));     // Column 4: Analysis
 
                 } while (cursor.moveToNext());
             }
@@ -357,11 +374,10 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
         adapter.notifyDataSetChanged();
     }
 
-
     private void processOfflineData(Context context) {
         DBHelper dbHelper = new DBHelper(context);
         Cursor cursor = dbHelper.getOfflineData();
-
+        recyclerView.setOnTouchListener((view, event) -> true);
         if (cursor != null) {
             int totalUrls = cursor.getCount();  // Total number of URLs to process
             final AtomicInteger remainingUrls = new AtomicInteger(totalUrls);
@@ -397,15 +413,21 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
                                             dbHelper.insertData(url, sender, apiUrl, analysis, image, analysisResultJSON);
                                             dbHelper.deleteRecordById(id);
 
-                                            // Enable buttons and Bottom Navigation
-                                            btnScanOffline.setEnabled(true);
-                                            btnRemoveItem.setEnabled(true);
-                                            layoutOfflineProcess.setVisibility(View.GONE);
-
                                             // Decrement the remaining URLs count
                                             if (remainingUrls.decrementAndGet() == 0) {
                                                 if (getActivity() instanceof MainActivity) {
                                                     ((MainActivity) getActivity()).setBottomNavigationEnabled(true);
+
+                                                }
+                                                // Enable after OfflineScan is completed
+                                                btnScanOffline.setEnabled(true);
+                                                btnRemoveItem.setEnabled(true);
+                                                layoutProcessText.setVisibility(View.GONE); // yung umiikot
+                                                layoutOfflineProcess.setVisibility(View.GONE);
+                                                recyclerView.setOnTouchListener((view, event) -> false); // true to disable touch events
+                                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                                                    recyclerView.setRenderEffect(null);
+                                                    layoutSortFilter.setRenderEffect(null);
                                                 }
                                                 refreshData(); // Call refreshData when all URLs are processed
                                             }
@@ -414,39 +436,69 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
                                 } else {
                                     // Failure case
                                     new Handler(Looper.getMainLooper()).post(() -> {
-                                        btnScanOffline.setEnabled(true);
-                                        btnRemoveItem.setEnabled(true);
                                         if (getActivity() instanceof MainActivity) {
                                             ((MainActivity) getActivity()).setBottomNavigationEnabled(true);
                                         }
 
                                         if (remainingUrls.decrementAndGet() == 0) {
+                                            // Enable after OfflineScan is completed
+                                            btnScanOffline.setEnabled(true);
+                                            btnRemoveItem.setEnabled(true);
+                                            spin_Date.setEnabled(true);
+                                            spin_Result.setEnabled(true);
+                                            layoutProcessText.setVisibility(View.GONE); // yung umiikot
+                                            layoutOfflineProcess.setVisibility(View.GONE);
+                                            recyclerView.setOnTouchListener((view, event) -> false); // true to disable touch events
+                                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                                                recyclerView.setRenderEffect(null);
+                                                layoutSortFilter.setRenderEffect(null);
+                                            }
                                             refreshData();
                                         }
                                     });
                                 }
                             } catch (IOException | NoSuchAlgorithmException e) {
                                 new Handler(Looper.getMainLooper()).post(() -> {
-                                    btnScanOffline.setEnabled(true);
-                                    btnRemoveItem.setEnabled(true);
                                     if (getActivity() instanceof MainActivity) {
                                         ((MainActivity) getActivity()).setBottomNavigationEnabled(true);
                                     }
 
                                     if (remainingUrls.decrementAndGet() == 0) {
+                                        // Enable after OfflineScan is completed
+                                        btnScanOffline.setEnabled(true);
+                                        btnRemoveItem.setEnabled(true);
+                                        spin_Date.setEnabled(true);
+                                        spin_Result.setEnabled(true);
+                                        layoutProcessText.setVisibility(View.GONE); // yung umiikot
+                                        layoutOfflineProcess.setVisibility(View.GONE);
+                                        recyclerView.setOnTouchListener((view, event) -> false); // true to disable touch events
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                                            recyclerView.setRenderEffect(null);
+                                            layoutSortFilter.setRenderEffect(null);
+                                        }
                                         refreshData();
                                     }
                                 });
                                 Log.e("SmsListener", "Error: " + e.getMessage());
                             } catch (JSONException e) {
                                 new Handler(Looper.getMainLooper()).post(() -> {
-                                    btnScanOffline.setEnabled(true);
-                                    btnRemoveItem.setEnabled(true);
                                     if (getActivity() instanceof MainActivity) {
                                         ((MainActivity) getActivity()).setBottomNavigationEnabled(true);
                                     }
 
                                     if (remainingUrls.decrementAndGet() == 0) {
+                                        // Enable after OfflineScan is completed
+                                        btnScanOffline.setEnabled(true);
+                                        btnRemoveItem.setEnabled(true);
+                                        spin_Date.setEnabled(true);
+                                        spin_Result.setEnabled(true);
+                                        layoutProcessText.setVisibility(View.GONE); // yung umiikot
+                                        layoutOfflineProcess.setVisibility(View.GONE);
+                                        recyclerView.setOnTouchListener((view, event) -> false); // true to disable touch events
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                                            recyclerView.setRenderEffect(null);
+                                            layoutSortFilter.setRenderEffect(null);
+                                        }
                                         refreshData();
                                     }
                                 });
@@ -461,11 +513,22 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
             cursor.close();
         } else {
             new Handler(Looper.getMainLooper()).post(() -> {
-                btnScanOffline.setEnabled(true);
-                btnRemoveItem.setEnabled(true);
                 if (getActivity() instanceof MainActivity) {
                     ((MainActivity) getActivity()).setBottomNavigationEnabled(true);
                 }
+                // Enable after OfflineScan is completed
+                btnScanOffline.setEnabled(true);
+                btnRemoveItem.setEnabled(true);
+                spin_Date.setEnabled(true);
+                spin_Result.setEnabled(true);
+                layoutProcessText.setVisibility(View.GONE); // yung umiikot
+                layoutOfflineProcess.setVisibility(View.GONE);
+                recyclerView.setOnTouchListener((view, event) -> false); // true to disable touch events
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    recyclerView.setRenderEffect(null);
+                    layoutSortFilter.setRenderEffect(null);
+                }
+                refreshData(); // Call refreshData when all URLs are processed
             });
             Log.e("Error", "Cursor is null or empty");
         }
@@ -507,6 +570,7 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
         } else {
             System.out.println("Internet Not Connected");
             layoutSpinnerButton.setVisibility(View.GONE);
+            layoutProcessText.setVisibility(View.GONE);
             internet.setVisibility(View.VISIBLE);
             txtInternet.setVisibility(View.VISIBLE);
         }
