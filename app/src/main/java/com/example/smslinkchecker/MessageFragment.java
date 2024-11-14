@@ -2,13 +2,15 @@ package com.example.smslinkchecker;
 
 import static android.R.layout.simple_spinner_item;
 
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
 import android.content.Context;
-import android.content.Intent;
 
+<<<<<<< Updated upstream
 import androidx.core.app.NotificationCompat;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+=======
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+
+>>>>>>> Stashed changes
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -27,7 +29,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.os.Handler;
 import android.os.Looper;
-import android.text.Layout;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -44,9 +45,6 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 
 import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
