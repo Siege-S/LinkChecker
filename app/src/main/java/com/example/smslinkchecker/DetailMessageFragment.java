@@ -218,9 +218,9 @@ public class DetailMessageFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 // In your Activity or Fragment where you want to show the dialog
-                String phoneNumber = mSender;
-                ImageDialogFragment imageDialog = ImageDialogFragment.newInstance(phoneNumber);
-                imageDialog.show(getChildFragmentManager(), "ImageDialog");
+//                String phoneNumber = mSender;
+//                ImageDialogFragment imageDialog = ImageDialogFragment.newInstance(phoneNumber);
+//                imageDialog.show(getChildFragmentManager(), "ImageDialog");
             }
         });
         btnBack.setOnClickListener(new View.OnClickListener() {

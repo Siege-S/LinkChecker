@@ -67,13 +67,15 @@ public class SmsListener extends BroadcastReceiver {
 
         DBHelper dbHelper = new DBHelper(context);
         SmsMessage[] messages = extractSmsMessages(intent);
-        if (messages == null) return;
-
+        if (messages == null) {
+            return;
+        }
         for (SmsMessage message : messages) {
             String msgFrom = message.getOriginatingAddress();
             String msgBody = message.getMessageBody();
             Log.v("URLs", "From: " + msgFrom + " , Body: " + msgBody);
 
+            // Regular Expression
             List<String> urls = extractUrlsFromMessage(msgBody, context);
 
             if (!MessageFragment.isInternetConnected(context)) {

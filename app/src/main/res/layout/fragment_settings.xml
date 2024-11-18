@@ -72,7 +72,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/linearLayout11"
-        app:layout_constraintVertical_bias="0.0">
+        app:layout_constraintVertical_bias="1.0">
 
         <ScrollView
             android:layout_width="match_parent"
@@ -89,7 +89,7 @@
                     android:layout_height="wrap_content"
                     android:fontFamily="@font/poppins_semibold"
                     android:paddingHorizontal="15dp"
-                    android:text="Recommended Permissions"
+                    android:text="Required Permissions"
                     android:textColor="#969696" />
 
                 <LinearLayout
@@ -186,7 +186,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:fontFamily="@font/poppins_regular"
-                        android:text="AutoStart (Optional)"
+                        android:text="AutoStart"
                         android:textColor="@color/black"
                         android:textSize="16sp" />
 
@@ -240,68 +240,104 @@
 
                 </LinearLayout>
 
-<!--                <LinearLayout-->
-<!--                    android:layout_width="match_parent"-->
-<!--                    android:layout_height="wrap_content"-->
-<!--                    android:layout_marginBottom="20dp"-->
-<!--                    android:background="#00FFFFFF"-->
-<!--                    android:gravity="center"-->
-<!--                    android:orientation="vertical"-->
-<!--                    android:paddingHorizontal="15dp"-->
-<!--                    app:layout_constraintEnd_toEndOf="parent"-->
-<!--                    app:layout_constraintHorizontal_bias="0.0"-->
-<!--                    app:layout_constraintStart_toStartOf="parent"-->
-<!--                    app:layout_constraintTop_toBottomOf="@+id/linearLayout3">-->
+                <LinearLayout
+                    android:id="@+id/layoutCredits"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/shape_container_settings"
+                    android:clickable="true"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="15dp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintHorizontal_bias="0.0"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/linearLayout3">
 
-<!--                    <LinearLayout-->
-<!--                        android:layout_width="match_parent"-->
-<!--                        android:layout_height="wrap_content"-->
-<!--                        android:background="#00FFFFFF">-->
+                    <ImageView
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_marginEnd="10dp"
+                        android:background="@drawable/shape_settings_blue"
+                        app:srcCompat="@drawable/logowhite" />
 
-<!--                        <LinearLayout-->
-<!--                            android:layout_width="match_parent"-->
-<!--                            android:layout_height="wrap_content"-->
-<!--                            android:gravity="center"-->
-<!--                            android:orientation="vertical"-->
-<!--                            android:background="#00FFFFFF">-->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:fontFamily="@font/poppins_regular"
+                        android:text="About LinkGuard"
+                        android:textColor="@color/black"
+                        android:textSize="16sp" />
 
-<!--                            <TextView-->
-<!--                                android:layout_width="match_parent"-->
-<!--                                android:layout_height="wrap_content"-->
-<!--                                android:layout_weight="1"-->
-<!--                                android:fontFamily="@font/poppins_extrabold"-->
-<!--                                android:text="Overall Rating"-->
-<!--                                android:textAlignment="center"-->
-<!--                                android:textColor="@color/gray"-->
-<!--                                android:textSize="20sp" />-->
+                    <ImageView
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        app:srcCompat="@drawable/next" />
 
-<!--                            <TextView-->
-<!--                                android:layout_width="match_parent"-->
-<!--                                android:layout_height="wrap_content"-->
-<!--                                android:layout_weight="1"-->
-<!--                                android:fontFamily="@font/poppins_extrabold"-->
-<!--                                android:text="N.n"-->
-<!--                                android:textAlignment="center"-->
-<!--                                android:textColor="@color/black"-->
-<!--                                android:textSize="60sp" />-->
+                </LinearLayout>
 
-<!--                            <RatingBar-->
-<!--                                android:layout_width="240dp"-->
-<!--                                android:layout_height="wrap_content"-->
-<!--                                android:progressTint="#FFEB3B" />-->
+                <!--                <LinearLayout-->
+                <!--                    android:layout_width="match_parent"-->
+                <!--                    android:layout_height="wrap_content"-->
+                <!--                    android:layout_marginBottom="20dp"-->
+                <!--                    android:background="#00FFFFFF"-->
+                <!--                    android:gravity="center"-->
+                <!--                    android:orientation="vertical"-->
+                <!--                    android:paddingHorizontal="15dp"-->
+                <!--                    app:layout_constraintEnd_toEndOf="parent"-->
+                <!--                    app:layout_constraintHorizontal_bias="0.0"-->
+                <!--                    app:layout_constraintStart_toStartOf="parent"-->
+                <!--                    app:layout_constraintTop_toBottomOf="@+id/linearLayout3">-->
 
-<!--                            <TextView-->
-<!--                                android:layout_width="wrap_content"-->
-<!--                                android:layout_height="wrap_content"-->
-<!--                                android:fontFamily="@font/poppins_regular"-->
-<!--                                android:text="Based on N Reviews"-->
-<!--                                android:textColor="@color/gray"-->
-<!--                                android:textSize="16sp" />-->
-<!--                        </LinearLayout>-->
+                <!--                    <LinearLayout-->
+                <!--                        android:layout_width="match_parent"-->
+                <!--                        android:layout_height="wrap_content"-->
+                <!--                        android:background="#00FFFFFF">-->
 
-<!--                    </LinearLayout>-->
+                <!--                        <LinearLayout-->
+                <!--                            android:layout_width="match_parent"-->
+                <!--                            android:layout_height="wrap_content"-->
+                <!--                            android:gravity="center"-->
+                <!--                            android:orientation="vertical"-->
+                <!--                            android:background="#00FFFFFF">-->
 
-<!--                </LinearLayout>-->
+                <!--                            <TextView-->
+                <!--                                android:layout_width="match_parent"-->
+                <!--                                android:layout_height="wrap_content"-->
+                <!--                                android:layout_weight="1"-->
+                <!--                                android:fontFamily="@font/poppins_extrabold"-->
+                <!--                                android:text="Overall Rating"-->
+                <!--                                android:textAlignment="center"-->
+                <!--                                android:textColor="@color/gray"-->
+                <!--                                android:textSize="20sp" />-->
+
+                <!--                            <TextView-->
+                <!--                                android:layout_width="match_parent"-->
+                <!--                                android:layout_height="wrap_content"-->
+                <!--                                android:layout_weight="1"-->
+                <!--                                android:fontFamily="@font/poppins_extrabold"-->
+                <!--                                android:text="N.n"-->
+                <!--                                android:textAlignment="center"-->
+                <!--                                android:textColor="@color/black"-->
+                <!--                                android:textSize="60sp" />-->
+
+                <!--                            <RatingBar-->
+                <!--                                android:layout_width="240dp"-->
+                <!--                                android:layout_height="wrap_content"-->
+                <!--                                android:progressTint="#FFEB3B" />-->
+
+                <!--                            <TextView-->
+                <!--                                android:layout_width="wrap_content"-->
+                <!--                                android:layout_height="wrap_content"-->
+                <!--                                android:fontFamily="@font/poppins_regular"-->
+                <!--                                android:text="Based on N Reviews"-->
+                <!--                                android:textColor="@color/gray"-->
+                <!--                                android:textSize="16sp" />-->
+                <!--                        </LinearLayout>-->
+
+                <!--                    </LinearLayout>-->
+
+                <!--                </LinearLayout>-->
             </LinearLayout>
         </ScrollView>
 

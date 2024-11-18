@@ -2,6 +2,7 @@ package com.example.smslinkchecker;
 
 import static com.example.smslinkchecker.MainActivity.REQUEST_SMS_PERMISSION;
 
+import android.app.AlertDialog;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -14,17 +15,15 @@ import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentTransaction;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import android.provider.Settings;
-import android.text.Layout;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CompoundButton;
+import android.widget.EditText;
+import android.widget.RatingBar;
 import android.widget.Switch;
 import android.widget.Toast;
 import android.Manifest;
@@ -46,6 +45,7 @@ public class SettingsFragment extends Fragment {
     private String mParam1;
     private String mParam2;
 
+    private static final String email = "linkguard0311@gmail.com";
     public SettingsFragment() {
         // Required empty public constructor
     }
@@ -111,14 +111,14 @@ public class SettingsFragment extends Fragment {
         View layoutNotification = view.findViewById(R.id.layoutNotification);
         View layoutAutoStart = view.findViewById(R.id.layoutAutoStart);
         View layoutPermission = view.findViewById(R.id.layoutPermission);
-
+        View layoutCredits = view.findViewById(R.id.layoutCredits);
         layoutFeedback.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 //Dialog Feedback
-                FeedbackDialogFragment feedbackDialog = new FeedbackDialogFragment();
-                feedbackDialog.show(getChildFragmentManager(), "feedbackDialog");
-
+//                FeedbackDialogFragment feedbackDialog = new FeedbackDialogFragment();
+//                feedbackDialog.show(getChildFragmentManager(), "feedbackDialog");
+                feedback_dialog();
             }
         });
         layoutNotification.setOnClickListener(new View.OnClickListener() {
@@ -130,8 +130,30 @@ public class SettingsFragment extends Fragment {
         layoutAutoStart.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                autoStartSettings();
+                LayoutInflater inflater = LayoutInflater.from(getContext());
+                View view = inflater.inflate(R.layout.dialog_autostart, null);
+                Button btnGoToSettings = view.findViewById(R.id.btnGoToSettings);
+                Button btnClose = view.findViewById(R.id.btnClose);
+
+                AlertDialog alertDialog = new AlertDialog.Builder(getContext())
+                        .setView(view)
+                        .create();
+
+                alertDialog.show();
+                btnGoToSettings.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        autoStartSettings();
+                    }
+                });
+                btnClose.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        alertDialog.dismiss();
+                    }
+                });
             }
+
         });
         layoutPermission.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -140,8 +162,86 @@ public class SettingsFragment extends Fragment {
                 openAppSettings();
             }
         });
+        layoutCredits.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                credits_dialog();
+            }
+        });
     }
 
+    public void credits_dialog(){
+        LayoutInflater inflater = LayoutInflater.from(getContext());
+        View view = inflater.inflate(R.layout.dialog_about, null);
+
+        Button btnClose = view.findViewById(R.id.btnGoToSettings);
+
+        AlertDialog alertDialog = new AlertDialog.Builder(getContext())
+                .setView(view)
+                .create();
+
+        btnClose.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                alertDialog.dismiss();
+            }
+        });
+
+        alertDialog.show();
+    }
+
+    public void feedback_dialog() {
+        LayoutInflater inflater = LayoutInflater.from(getContext());
+        View view = inflater.inflate(R.layout.dialog_feedback, null);
+
+        RatingBar rating_bar = view.findViewById(R.id.rating_bar);
+        EditText feedback_input = view.findViewById(R.id.feedback_input);
+        Button btnClose = view.findViewById(R.id.btnGoToSettings);
+        Button btnSubmit = view.findViewById(R.id.btnSubmit);
+
+        AlertDialog alertDialog = new AlertDialog.Builder(getContext())
+                .setView(view)
+                .create();
+
+        btnClose.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                alertDialog.dismiss();
+            }
+        });
+        btnSubmit.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (feedback_input.getText().toString().isEmpty() || rating_bar.getRating() == 0) {
+                    Toast.makeText(getContext(), "Please enter your feedback and rating.", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(getContext(), "Send feedback via Gmail", Toast.LENGTH_SHORT).show();
+                    sendFeedbackViaEmail(feedback_input.getText().toString(), rating_bar.getRating());
+                    alertDialog.dismiss();
+                }
+            }
+        });
+        alertDialog.show();
+    }
+    private void sendFeedbackViaEmail(String feedbackText, float ratingValue) {
+        // Define the email subject and body
+        String subject = "App Feedback";
+        String body = "Feedback: " + feedbackText + "\nRating: " + ratingValue + " stars";
+
+        // Create the email Intent
+        Intent emailIntent = new Intent(Intent.ACTION_SEND);
+        emailIntent.setType("message/rfc822");
+        emailIntent.putExtra(Intent.EXTRA_EMAIL, new String[]{email});
+        emailIntent.putExtra(Intent.EXTRA_SUBJECT, subject);
+        emailIntent.putExtra(Intent.EXTRA_TEXT, body);
+
+        // Start the email intent
+        try {
+            startActivity(Intent.createChooser(emailIntent, "Send Feedback via:"));
+        } catch (android.content.ActivityNotFoundException ex) {
+            Toast.makeText(getActivity(), "No email clients installed.", Toast.LENGTH_SHORT).show();
+        }
+    }
     private void openNotificationSettings() {
         Intent intent = new Intent();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

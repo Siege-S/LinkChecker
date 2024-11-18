@@ -184,15 +184,6 @@ public class DBHelper extends SQLiteOpenHelper {
         return db.rawQuery(query, argsArray);
     }
 
-
-
-    public Cursor getOldRecords(){
-        SQLiteDatabase DB = this.getReadableDatabase();
-        Cursor cursor = DB.rawQuery("SELECT * FROM urlmessagestbl", null);
-        return cursor;
-    }
-
-
     //urlmessagestbl function
     public void deleteRecord(int id) {
         SQLiteDatabase db = this.getWritableDatabase();

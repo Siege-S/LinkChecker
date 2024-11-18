@@ -3,8 +3,10 @@ package com.example.smslinkchecker;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -221,14 +223,104 @@ public class DetailMessageFragment_new extends Fragment {
         Button btnBack = view.findViewById(R.id.btnBack);
 
         btnDeleteSMS.setOnClickListener(new View.OnClickListener() {
+            int imageCurrentIndex = 0; // Reset imageCurrentIndex when the dialog is opened
             @Override
             public void onClick(View v) {
-                // In your Activity or Fragment where you want to show the dialog
-                String phoneNumber = mSender;
-                ImageDialogFragment imageDialog = ImageDialogFragment.newInstance(phoneNumber);
-                imageDialog.show(getChildFragmentManager(), "ImageDialog");
+                imageCurrentIndex = 0;
+
+                LayoutInflater inflater = LayoutInflater.from(getContext());
+                View view = inflater.inflate(R.layout.dialog_image_slider, null);
+
+                // Initialize views
+                Button btnExit = view.findViewById(R.id.btnExit);
+                Button btn_previous = view.findViewById(R.id.btn_previous);
+                Button btn_next = view.findViewById(R.id.btn_next);
+                Button btn_got_it = view.findViewById(R.id.btn_got_it);
+                TextView image_description = view.findViewById(R.id.image_description);
+                ImageView dialog_image = view.findViewById(R.id.dialog_image);
+
+                // Set image slider
+                int Images[] = {R.drawable.slider0, R.drawable.slider1, R.drawable.slider2, R.drawable.slider3, R.drawable.slider4};
+                String[] descriptions = {"Please follow the instructions for moving sms to spam or deleting sms.",
+                        "Click the '3 dots' on the top right corner to open menu.",
+                        "Click 'Delete' if you want to delete the sms or Click 'Block & report' spam to move to spam.",
+                        "Confirm Deletion.",
+                        "Confirm Blocking and Reporting sms."
+                };
+
+                dialog_image.setImageResource(Images[imageCurrentIndex]);
+                image_description.setText(descriptions[imageCurrentIndex]);
+                btn_previous.setVisibility(View.GONE);
+                btn_got_it.setVisibility(View.GONE);
+
+                AlertDialog alertDialog = new AlertDialog.Builder(getContext())
+                        .setView(view)
+                        .create();
+                btnExit.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        alertDialog.dismiss();
+                    }
+                });
+                btn_previous.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        // Handle previous button click
+                        if(imageCurrentIndex > 0){
+                            imageCurrentIndex--; // decrement index
+                            dialog_image.setImageResource(Images[imageCurrentIndex]); // display previous image
+                            image_description.setText(descriptions[imageCurrentIndex]); // display description
+//                            Toast.makeText(getContext(), "Image " + imageCurrentIndex, Toast.LENGTH_SHORT).show(); //test
+
+                            // Show Next btn
+                            btn_next.setVisibility(View.VISIBLE);
+
+                            if(imageCurrentIndex == 0){
+                                btn_previous.setVisibility(View.GONE);
+                            }
+
+                            // Hide "Got it" button when moving back from the last image
+                            if (btn_got_it.getVisibility() == View.VISIBLE) {
+                                btn_got_it.setVisibility(View.GONE);
+                            }
+                        }
+                    }
+                });
+                btn_next.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        // Handle next button click
+                        if(imageCurrentIndex < Images.length - 1){
+                            imageCurrentIndex++; // increment index
+                            dialog_image.setImageResource(Images[imageCurrentIndex]); // display next image
+                            image_description.setText(descriptions[imageCurrentIndex]); // display description
+//                            Toast.makeText(getContext(), "Image " + imageCurrentIndex, Toast.LENGTH_SHORT).show(); // test
+
+                            // Show Previous btn
+                            btn_previous.setVisibility(View.VISIBLE);
+
+                            if(imageCurrentIndex == Images.length - 1){
+                                btn_next.setVisibility(View.GONE);
+                                btn_got_it.setVisibility(View.VISIBLE);
+                            }
+                        }
+                    }
+                });
+                btn_got_it.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Intent smsIntent = new Intent(Intent.ACTION_SENDTO);
+                        smsIntent.setData(Uri.parse("smsto:" + mSender)); // go to sms sender
+                        smsIntent.putExtra("sms_body", "Please follow the instructions for moving sms to spam or deleting sms.");
+                        startActivity(smsIntent);
+
+                        alertDialog.dismiss();
+                    }
+                });
+                alertDialog.show();
             }
         });
+
         btnBack.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
