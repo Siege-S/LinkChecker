@@ -425,8 +425,8 @@ public class SmsListener extends BroadcastReceiver {
         // Build the notification
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_notification)
-                .setContentTitle("No Internet Connection")
-                .setContentText("URL is saved for later analysis: " + url)
+                .setContentTitle("LinkGuard is Offline, '" + url + "' is saved for later analysis")
+                .setContentText("Please avoid clicking this url '" + url + "', until connection is stored.")
                 .setPriority(NotificationCompat.PRIORITY_HIGH);
 
         // Show the notification

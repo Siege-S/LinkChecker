@@ -76,9 +76,10 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
         String sender = Sender.get(position);
         String url = URL.get(position);
         String jsonResponse = JSONResponse.get(position);
+        String date = Date.get(position);
         byte[] imageBytes = imageURL.get(position);  // This is a byte array
 
-        DetailMessageFragment_new fragment = DetailMessageFragment_new.newInstance(id, sender, url, jsonResponse, imageBytes);
+        DetailMessageFragment_new fragment = DetailMessageFragment_new.newInstance(id, sender, url, jsonResponse, date, imageBytes);
         fragmentTransaction.replace(R.id.frame_layout, fragment);
         fragmentTransaction.addToBackStack(null);
         fragmentTransaction.commit();

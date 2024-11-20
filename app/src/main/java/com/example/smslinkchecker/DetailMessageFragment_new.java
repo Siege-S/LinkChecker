@@ -48,11 +48,13 @@ public class DetailMessageFragment_new extends Fragment {
     private static final String ARG_URL = "url";
     private static final String ARG_JSON = "json";
     private static final String ARG_IMAGE = "image";
+    private static final String ARG_DATE = "date";
 
     private String mId;
     private String mSender;
     private String mURL;
     private String mJSON;
+    private String mDate;
     private byte[] mImage;
 
     ImageView imageView;
@@ -72,13 +74,14 @@ public class DetailMessageFragment_new extends Fragment {
         // Required empty public constructor
     }
 
-    public static DetailMessageFragment_new newInstance(String id, String sender, String url, String json, byte[] image) {
+    public static DetailMessageFragment_new newInstance(String id, String sender, String url, String json, String date, byte[] image) {
         DetailMessageFragment_new fragment = new DetailMessageFragment_new();
         Bundle args = new Bundle();
         args.putString(ARG_ID, id);
         args.putString(ARG_SENDER, sender);
         args.putString(ARG_URL, url);
         args.putString(ARG_JSON, json);
+        args.putString(ARG_DATE, date);
         args.putByteArray(ARG_IMAGE, image);
         fragment.setArguments(args);
         return fragment;
@@ -93,6 +96,7 @@ public class DetailMessageFragment_new extends Fragment {
             mURL = getArguments().getString(ARG_URL);
             mImage = getArguments().getByteArray(ARG_IMAGE);
             mJSON = getArguments().getString(ARG_JSON);
+            mDate = getArguments().getString(ARG_DATE);
         }
     }
 
@@ -106,12 +110,14 @@ public class DetailMessageFragment_new extends Fragment {
         TextView idTextView = view.findViewById(R.id.txtdetailID);
         TextView senderTextView = view.findViewById(R.id.txtdetailNumber);
         TextView urlTextView = view.findViewById(R.id.txtdetailURL);
+        TextView dateTextView = view.findViewById(R.id.txttimeStamp);
 
         // Display
         imageView = view.findViewById(R.id.IV_detailImage);
         idTextView.setText(mId);
         senderTextView.setText("Sender: " + mSender);
         urlTextView.setText("URL Detected: \n" + mURL);
+        dateTextView.setText("Date of Analysis: \n" + mDate);
 
         if (mImage != null) {
             Bitmap bitmap = BitmapFactory.decodeByteArray(mImage, 0, mImage.length);
@@ -328,10 +334,9 @@ public class DetailMessageFragment_new extends Fragment {
                 FragmentManager fragmentManager = getActivity().getSupportFragmentManager();
                 FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
 
-                MessageFragment messageFragment = new MessageFragment(); // or MessageFragment.newInstance() if you have arguments
+                MessageFragment messageFragment = new MessageFragment();
 
                 fragmentTransaction.replace(R.id.frame_layout, messageFragment);
-//                fragmentTransaction.addToBackStack(null); // Optional: add the transaction to the back stack so the user can navigate back
                 fragmentTransaction.commit();
             }
         });
