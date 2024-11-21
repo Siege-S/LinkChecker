@@ -9,96 +9,93 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.os.PowerManager;
-import android.provider.Telephony;
 import android.telephony.SmsMessage;
 import android.util.Log;
 import android.util.Patterns;
 import android.widget.Toast;
 
-// Regex
 import androidx.core.app.NotificationCompat;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.URL;
 import java.net.URLEncoder;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 
-// screenshotmachine API
-import java.io.IOException;
-import java.net.URL;
-import java.security.NoSuchAlgorithmException;
-import java.util.HashMap;
-import java.util.Map;
-
-// another
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
-import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
-public class SmsListener extends BroadcastReceiver {
+public class SmsListener_old extends BroadcastReceiver {
     private static final String CHANNEL_ID = "1001";
-    public static final String API_KEY = BuildConfig.VT_API_KEY;
-    public static final String ss_API_KEY = BuildConfig.SS_API_KEY;
+    private static final String API_KEY = BuildConfig.VT_API_KEY;
+    private static final String ss_API_KEY = BuildConfig.SS_API_KEY;
+    private static final int POLLING_INTERVAL_MS = 10000; // 10 seconds
 
-    // Newest
+    // Modified smslistener (puro error kase)
     @Override
     public void onReceive(Context context, Intent intent) {
+        if (!"android.provider.Telephony.SMS_RECEIVED".equals(intent.getAction())) return;
 
-        // Adapted from (Source: https://www.youtube.com/watch?v=Q_5mnnj2Mfg)
-        if(Telephony.Sms.Intents.SMS_RECEIVED_ACTION.equals(intent.getAction())){
-            PowerManager powerManager = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
-            PowerManager.WakeLock wakeLock = powerManager.newWakeLock(
-                    PowerManager.PARTIAL_WAKE_LOCK,
-                    "SmsApp::WakeLockTag"
-            );
-            wakeLock.acquire(60 * 1000L); // Acquire for up to 2 minutes
+        DBHelper dbHelper = new DBHelper(context);
+        SmsMessage[] messages = extractSmsMessages(intent);
+        if (messages == null) {
+            return;
+        }
+        for (SmsMessage message : messages) {
+            String msgFrom = message.getOriginatingAddress();
+            String msgBody = message.getMessageBody();
+            Log.v("URLs", "From: " + msgFrom + " , Body: " + msgBody);
 
-            DBHelper dbHelper = new DBHelper(context);
+            // Method Regular Expression
+            List<String> urls = extractUrlsFromMessage(msgBody, context);
 
-            for (SmsMessage smsMessage : Telephony.Sms.Intents.getMessagesFromIntent(intent)){
-                String sender = smsMessage.getOriginatingAddress();
-                String messageBody = smsMessage.getMessageBody();
-
-                // Test
-                System.out.println(sender + " : " + messageBody);
-
-                // Regular Expression
-                List<String> urls = extractUrlsFromMessage(messageBody, context);
-
-                if (!MessageFragment.isInternetConnected(context)) {
-                    handleOfflineUrls(context, urls, sender, dbHelper);
-                } else {
-                    processUrlsWithInternet(context, urls, sender, dbHelper);
-                }
+            if (!MessageFragment.isInternetConnected(context)) {
+                handleOfflineUrls(context, urls, msgFrom, dbHelper);
+            } else {
+                processUrlsWithInternet(context, urls, msgFrom, dbHelper);
             }
-
         }
     }
 
+    private SmsMessage[] extractSmsMessages(Intent intent) {
+        Bundle bundle = intent.getExtras();
+        if (bundle == null) return null;
+
+        Object[] pdus = (Object[]) bundle.get("pdus");
+        SmsMessage[] messages = new SmsMessage[pdus.length];
+        for (int i = 0; i < pdus.length; i++) {
+            messages[i] = SmsMessage.createFromPdu((byte[]) pdus[i]);
+        }
+        return messages;
+    }
+
     private List<String> extractUrlsFromMessage(String msgBody, Context context) {
+        // Regular Expression
         List<String> urls = new ArrayList<>();
         Matcher matcher = Patterns.WEB_URL.matcher(msgBody);
         while (matcher.find()) {
             String detectedUrl = matcher.group();
             urls.add(detectedUrl);
             Toast.makeText(context, "URL Detected: " + detectedUrl, Toast.LENGTH_LONG).show();
-            Log.v("URL", "URL Detected: " + detectedUrl);
+            Log.v("URL", detectedUrl);
         }
         return urls;
     }
@@ -113,90 +110,46 @@ public class SmsListener extends BroadcastReceiver {
             }
         }
     }
-    public void processUrlsWithInternet(Context context, List<String> urls, String msgFrom, DBHelper dbHelper) {
+
+    private void processUrlsWithInternet(Context context, List<String> urls, String msgFrom, DBHelper dbHelper) {
         ExecutorService executorService = Executors.newSingleThreadExecutor();
         try {
             for (String url : urls) {
                 createNotification(context, "URL Detected in SMS message", url, 100);
-                executorService.execute(() -> {
-                    // Get the pinned OkHttpClient
-                    // Documentation https://square.github.io/okhttp/#post-to-a-server
-                    OkHttpClient client = NetworkClient.getPinnedHttpClient();
-
-                    JSONObject jsonResponse;
-                    String analysisId;
-                    try {
-                        // POST request https://docs.virustotal.com/reference/scan-url
-                        MediaType mediaType = MediaType.parse("application/x-www-form-urlencoded");
-                        RequestBody body = RequestBody.create(mediaType, "url=" + url);
-                        Request request = new Request.Builder()
-                                .url("https://www.virustotal.com/api/v3/urls")
-                                .post(body)
-                                .addHeader("accept", "application/json")
-                                .addHeader("x-apikey", API_KEY)
-                                .addHeader("content-type", "application/x-www-form-urlencoded")
-                                .build();
-
-                        try (Response postResponse = client.newCall(request).execute()) {
-                            if (!postResponse.isSuccessful()) {
-                                throw new IOException("Unexpected code " + postResponse);
-                            }
-
-                            String responseBody = postResponse.body().string();
-                            jsonResponse = new JSONObject(responseBody);
-                            analysisId =  jsonResponse.getJSONObject("data").getString("id");
-                        }
-
-                        // GET request https://docs.virustotal.com/reference/analysis
-                        Request getRequest = new Request.Builder()
-                                .url("https://www.virustotal.com/api/v3/analyses/" + analysisId)
-                                .get()
-                                .addHeader("accept", "application/json")
-                                .addHeader("x-apikey", API_KEY)
-                                .build();
-
-                        while (true) {
-                            try (Response getResponse = client.newCall(getRequest).execute()) {
-                                if (!getResponse.isSuccessful()) {
-                                    throw new IOException("Unexpected code " + getResponse);
-                                }
-                                String getResponseBody = getResponse.body().string();
-                                System.out.println("getResponseBody: " + getResponseBody);
-
-                                jsonResponse = new JSONObject(getResponseBody);
-                                JSONObject attributes = jsonResponse.getJSONObject("data").getJSONObject("attributes");
-
-                                Log.v("getResponseBody", jsonResponse.toString(2));
-                                System.out.println("Status: " + attributes.getString("status"));
-
-                                if (!attributes.getString("status").equals("queued")) {
-                                    break;
-                                }
-                                Thread.sleep(2000);
-                            }
-                        }
-                        // Screenshot using screenshotmachine API
-                        String apiUrl = SnapshotmachineAPI(url);
-                        Bitmap bitmap = BitmapFactory.decodeStream(new URL(apiUrl).openStream());
-                        byte[] image = getBitmapAsByteArray(bitmap);
-
-                        // Send to Database
-                        JSONObject finalJsonResponse = jsonResponse;
-                        String analysisResultJSON = jsonResponse.toString();
-                        new Handler(Looper.getMainLooper()).post(() -> {
-                            String analysis = NotifyResult(context, url, String.valueOf(finalJsonResponse));
-                            dbHelper.insertData(url, msgFrom, apiUrl, analysis, image, analysisResultJSON);
-                        });
-
-                    } catch (IOException | JSONException | InterruptedException |
-                             NoSuchAlgorithmException e) {
-                        showRetryNotification(context, url, msgFrom);
-                        e.printStackTrace();
-                    }
-                });
+                executorService.execute(() -> processSingleUrl(context, url, msgFrom, dbHelper));
             }
         } finally {
             executorService.shutdown();
+        }
+    }
+
+    private void processSingleUrl(Context context, String url, String msgFrom, DBHelper dbHelper) {
+        try {
+            String apiUrl = SnapshotmachineAPI(url);
+            String analysisId = processUrls(context, url);
+            if (analysisId != null) {
+                handleAnalysisResult(context, url, msgFrom, apiUrl, analysisId, dbHelper);
+            } else {
+                showRetryNotification(context, url, msgFrom);
+            }
+        } catch (Exception e) {
+            Log.e("Error", "Failed to process URL", e);
+            showRetryNotification(context, url, msgFrom);
+        }
+    }
+
+    private void handleAnalysisResult(Context context, String url, String msgFrom, String apiUrl, String analysisId, DBHelper dbHelper) throws IOException, JSONException, NoSuchAlgorithmException {
+        String analysisResultJSON = getAnalysis(analysisId);
+        if (analysisResultJSON != null) {
+            Bitmap bitmap = BitmapFactory.decodeStream(new URL(apiUrl).openStream());
+            byte[] image = getBitmapAsByteArray(bitmap);
+
+            new Handler(Looper.getMainLooper()).post(() -> {
+                String analysis = NotifyResult(context, url, analysisResultJSON);
+                dbHelper.insertData(url, msgFrom, apiUrl, analysis, image, analysisResultJSON);
+            });
+        } else {
+            showRetryNotification(context, url, msgFrom);
         }
     }
 
@@ -226,9 +179,11 @@ public class SmsListener extends BroadcastReceiver {
     }
 
 
-    public String NotifyResult(Context context, String url, String JSON){
+    public String NotifyResult(Context context,String url, String JSON){
         NotificationManager notificationManager = (NotificationManager)  context.getSystemService(Context.NOTIFICATION_SERVICE);
 
+
+// Create a notification channel if targeting Android 8.0 or above
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel(
                     CHANNEL_ID,
@@ -249,8 +204,40 @@ public class SmsListener extends BroadcastReceiver {
                 PendingIntent.FLAG_IMMUTABLE // Required for Android 12+
         );
 
-        String setTitle;
-        String result;
+        // Notification 1
+        NotificationCompat.Builder builder1 = new NotificationCompat.Builder(context, CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_notification)
+                .setContentTitle("LinkGuard identified the URL as suspicious.")
+                .setContentText("URL: "+url)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setAutoCancel(true) // Dismiss the notification when clicked
+                .setContentIntent(pendingIntent); // Set the intent that will fire when the user taps the notification
+
+        // Notification 2
+        NotificationCompat.Builder builder2 = new NotificationCompat.Builder(context, CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_notification)
+                .setContentTitle("LinkGuard identified the URL as Malicious.")
+                .setContentText("URL: " + url)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setAutoCancel(true) // Dismiss the notification when clicked
+                .setContentIntent(pendingIntent); // Set the intent that will fire when the user taps the notification
+        // Notification 3
+        NotificationCompat.Builder builder3 = new NotificationCompat.Builder(context, CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_notification)
+                .setContentTitle("LinkGuard identified the URL as both Malicious and Suspicious.")
+                .setContentText("URL: " + url)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setAutoCancel(true) // Dismiss the notification when clicked
+                .setContentIntent(pendingIntent); // Set the intent that will fire when the user taps the notification
+        // Notification 4
+        NotificationCompat.Builder builder4 = new NotificationCompat.Builder(context, CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_notification)
+                .setContentTitle("LinkGuard report shows the URL is Harmless.")
+                .setContentText("URL: " + url)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setAutoCancel(true) // Dismiss the notification when clicked
+                .setContentIntent(pendingIntent); // Set the intent that will fire when the user taps the notification
+
         try {
             JSONObject jsonObject = new JSONObject(JSON);
 
@@ -259,34 +246,25 @@ public class SmsListener extends BroadcastReceiver {
             int harmless = jsonObject.getJSONObject("data").getJSONObject("attributes").getJSONObject("stats").getInt("harmless");
 
             if(malicious > 0 && suspicious > 0){ // 3 if malicious and suspicious
-                setTitle = "Link is Malicious and Suspicious";
-                result = "3";
+                notificationManager.notify(100, builder3.build()); // Notification ID 3
+                System.out.println("Link is Malicious and Suspicious" + url);
+                return "3";
             }
             else if(malicious > 0){ // 1 if malicious
-                setTitle = "Link is Malicious";
-                result = "1";
+                notificationManager.notify(100, builder2.build()); // Notification ID 2
+                System.out.println("Link is Malicious" + url);
+                return "1";
             }
             else if(suspicious > 0){ // 2 if suspicious
-                setTitle = "Link is Suspicious";
-                result = "2";
+                notificationManager.notify(100, builder1.build()); // Notification ID 1
+                System.out.println("Link is Suspicious/Phishing" + url);
+                return "2";
             }
             else { // 0 if harmless
-                setTitle = "Link is Harmless";
-                result = "0";
-
+                notificationManager.notify(100, builder4.build()); // Notification ID 4
+                return "0";
             }
 
-            // Notification 1
-            NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
-                    .setSmallIcon(R.drawable.ic_notification)
-                    .setContentTitle(setTitle)
-                    .setContentText("URL: " + url)
-                    .setPriority(NotificationCompat.PRIORITY_HIGH)
-                    .setAutoCancel(true) // Dismiss the notification when clicked
-                    .setContentIntent(pendingIntent); // Set the intent that will fire when the user taps the notification
-
-            notificationManager.notify(100, builder.build());
-            return result;
         } catch (JSONException e) {
             throw new RuntimeException(e);
         }
@@ -303,7 +281,7 @@ public class SmsListener extends BroadcastReceiver {
         options.put("device", "desktop");
         options.put("format", "png");
         options.put("cacheLimit", "0");
-        options.put("delay", "3000"); // 3 seconds
+        options.put("delay", "8000"); // 10 seconds
         options.put("zoom", "100");
 
         String apiUrl = sm.generateScreenshotApiUrl(options);
@@ -351,6 +329,60 @@ public class SmsListener extends BroadcastReceiver {
         // Show the notification
         notificationManager.notify(notificationID, builder.build());
     }
+
+//    private static final int MAX_RETRIES = 3; // Number of retries
+
+//    public String scanURL(Context context, String url) throws IOException {
+//        OkHttpClient client = new OkHttpClient();
+//        MediaType mediaType = MediaType.parse("application/x-www-form-urlencoded");
+//        String encodedUrl = URLEncoder.encode(url, "UTF-8");
+//        RequestBody body = RequestBody.create(mediaType, "url=" + encodedUrl);
+//        Request request = new Request.Builder()
+//                .url("https://www.virustotal.com/api/v3/urls")
+//                .post(body)
+//                .addHeader("accept", "application/json")
+//                .addHeader("x-apikey", API_KEY)
+//                .addHeader("content-type", "application/x-www-form-urlencoded")
+//                .build();
+//
+//        int retryCount = 0;
+//        while (retryCount < MAX_RETRIES) {
+//            try (Response response = client.newCall(request).execute()) {
+//                if (!response.isSuccessful()) {
+//                    Log.e("ScanURL", "Request failed with code: " + response.code() + " - " + response.message());
+//                    System.out.println("Scan URL Error: " + response.code() + " - " + response.message());
+//                    throw new IOException("Unexpected code " + response);
+//                }
+//
+//                String responseBody = response.body().string();
+//                Log.d("ScanURL", "Response received: " + responseBody);
+//                System.out.println("Scan URL Response: " + responseBody);
+//
+//                JSONObject jsonResponse = new JSONObject(responseBody);
+//                return jsonResponse.getJSONObject("data").getString("id");
+//
+//            } catch (IOException | JSONException e) {
+//                Log.e("ScanURL", "Error in scanURL attempt " + retryCount + ": " + e.getMessage());
+//                e.printStackTrace();
+//
+//                retryCount++;
+//                if (retryCount >= MAX_RETRIES) {
+//                    invalidURL(context, url); // Handle the failure after max retries
+//                    return null;
+//                }
+//
+//                try {
+//                    // Wait before retrying (you can adjust the interval as needed)
+//                    Thread.sleep(2000); // 2 seconds delay before retrying
+//                } catch (InterruptedException interruptedException) {
+//                    Thread.currentThread().interrupt();
+//                    return null;
+//                }
+//            }
+//        }
+//        return null;
+//    }
+
 
     private void invalidURL(Context context, String url) {
         NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
@@ -427,8 +459,8 @@ public class SmsListener extends BroadcastReceiver {
                     Log.d("SmsListener", "Analysis Results: " + jsonResponse.toString(2));
                     return jsonResponse.toString();
                 } else {
-                    Log.d("SmsListener", "Analysis still queued.");
-                    Thread.sleep(1000);
+                    Log.d("SmsListener", "Analysis still queued. Checking again in 10 seconds.");
+                    Thread.sleep(POLLING_INTERVAL_MS);
                 }
 
             } catch (IOException | JSONException | InterruptedException e) {
@@ -440,13 +472,14 @@ public class SmsListener extends BroadcastReceiver {
         return null;
     }
 
-    int retryCountNew = 5;
+    int retryCountNew = 3;
 
     public String processUrls(Context context, String url) throws IOException, JSONException {
-        // POST request https://docs.virustotal.com/reference/scan-url
-
-        // Get the pinned OkHttpClient
-        OkHttpClient client = NetworkClient.getPinnedHttpClient();
+        OkHttpClient client = new OkHttpClient.Builder()
+                .connectTimeout(30, TimeUnit.SECONDS)
+                .readTimeout(30, TimeUnit.SECONDS)
+                .writeTimeout(30, TimeUnit.SECONDS)
+                .build();
 
         String encodedUrl = URLEncoder.encode(url, "UTF-8");
         MediaType mediaType = MediaType.parse("application/x-www-form-urlencoded");

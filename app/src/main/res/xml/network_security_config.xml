@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">wwww.virustotal.com</domain>
+        <pin-set>
+            <!-- Pin for the SSL/TLS certificate of example.com -->
+            <pin digest="SHA-256">SKnAhvm/+K6bsYuN0NqL/1j+fdMMICY8JVm0PyYJ5TA=</pin>
+            <!-- Backup Pin for the SSL/TLS certificate of example.com -->
+            <pin digest="SHA-256">Wec45nQiFwKvHtuHxSAMGkt19k+uPSw9JlEkxhvYPHk=</pin>
+            <pin digest="SHA-256">Wec45nQiFwKvHtuHxSAMGkt19k+uPSw9JlEkxhvYPHk=</pin>
+        </pin-set>
+    </domain-config>
+</network-security-config>
