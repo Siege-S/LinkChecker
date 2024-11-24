@@ -37,6 +37,25 @@ public class DBHelper extends SQLiteOpenHelper {
         }
         onCreate(db);
     }
+    public boolean duplicateURL(String url, String sender) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery("SELECT * FROM urlmessagestbl WHERE url = ? AND contactnumber = ?", new String[]{url, sender});
+
+        if(cursor.getCount() == 0){
+            System.out.println("DBHelper: New Entry. . . ");
+            return false;
+        }
+
+        while (cursor.moveToNext()){
+            if (cursor.getString(cursor.getColumnIndexOrThrow("url")).equals(url) && cursor.getString(cursor.getColumnIndexOrThrow("contactnumber")).equals(sender)){
+                System.out.println("DBHelper: Duplicate Entry . . .");
+                return true;
+            }
+        }
+        cursor.close();
+        db.close();
+        return false;
+    }
     public void deleteRecordByURL(String url) {
         SQLiteDatabase db = this.getWritableDatabase();
         // Use the correct column name for the URL (assuming it's called "url" in the database)
@@ -61,10 +80,10 @@ public class DBHelper extends SQLiteOpenHelper {
 
         int count = 0;
         if (cursor.moveToFirst()) {
-            count = cursor.getInt(0); // Get the count from the first column
+            count = cursor.getInt(0);
         }
 
-        cursor.close(); // Always close the cursor to avoid memory leaks
+        cursor.close();
         return count;
     }
     public ArrayList<String> getOfflineUrls() {
@@ -93,6 +112,31 @@ public class DBHelper extends SQLiteOpenHelper {
         return offlineURL;
     }
 
+//    public ArrayList<String> getOfflineUrlsSender() {
+//        ArrayList<String> offlineURLSender = new ArrayList<>();
+//        SQLiteDatabase db = this.getReadableDatabase();
+//        Cursor cursor = null;
+//        try {
+//            // Query to get all URLs from the table
+//            cursor = db.rawQuery("SELECT sender FROM urlOfflineTbl ORDER BY timestamp DESC", null);
+//            if (cursor.moveToFirst()) {
+//                do {
+//                    // Add each URL to the ArrayList
+//                    offlineURLSender.add(cursor.getString(cursor.getColumnIndexOrThrow("sender")));
+//                } while (cursor.moveToNext());
+//            }
+//        } catch (Exception e) {
+//            Log.e("DBHelper", "Error while retrieving data", e);
+//        } finally {
+//            // Close the cursor and database
+//            if (cursor != null) {
+//                cursor.close();
+//            }
+//            db.close();
+//        }
+//
+//        return offlineURLSender;
+//    }
     public boolean insertOfflineTbl(String url, String sender) {
         SQLiteDatabase db = null;
         try {
@@ -148,6 +192,36 @@ public class DBHelper extends SQLiteOpenHelper {
         }
     }
 
+    public void updateData(String url, String sender, String apiUrl, String analysis, byte[] screenShot, String analysisJSON){
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        ContentValues cv = new ContentValues();
+        cv.put("url", url);
+        cv.put("contactnumber", sender);
+        cv.put("apiurl", apiUrl);
+        cv.put("analysis", analysis);
+        cv.put("screenshot", screenShot);
+        cv.put("analysisJSON", analysisJSON);
+        cv.put("timestamp", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date()));
+
+        // Define the WHERE clause and arguments
+        String whereClause = "url = ? AND contactnumber = ?";
+        String[] whereArgs = { url, sender };
+
+
+        // Perform the update
+        int rowsUpdated = db.update("urlmessagestbl", cv, whereClause, whereArgs);
+
+        if (rowsUpdated > 0) {
+            Log.v("DBHelper", "Data updated successfully");
+            System.out.println("Data updated successfully");
+        } else {
+            Log.e("DBHelper", "Failed to update data");
+            System.out.println("Failed to update data");
+        }
+        db.close();
+    }
+
     //urlmessagestbl function
 //    public Cursor getdata(){
 //        SQLiteDatabase DB = this.getReadableDatabase();
@@ -183,15 +257,6 @@ public class DBHelper extends SQLiteOpenHelper {
 
         return db.rawQuery(query, argsArray);
     }
-
-
-
-    public Cursor getOldRecords(){
-        SQLiteDatabase DB = this.getReadableDatabase();
-        Cursor cursor = DB.rawQuery("SELECT * FROM urlmessagestbl", null);
-        return cursor;
-    }
-
 
     //urlmessagestbl function
     public void deleteRecord(int id) {

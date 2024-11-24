@@ -1,0 +1,383 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/PrimaryBlue"
+    tools:context=".DetailMessageFragment">
+
+    <ScrollView
+        android:id="@+id/scrollView2"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <ImageView
+                android:id="@+id/IV_detailImage"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:scaleType="fitXY"
+                app:layout_constraintBottom_toTopOf="@+id/layoutParent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <LinearLayout
+                android:id="@+id/layoutParent"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/IV_detailImage">
+
+                <LinearLayout
+                    android:id="@+id/linearLayout4"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="20dp"
+                    android:layout_marginTop="12dp"
+                    android:background="@drawable/shape_stats_new"
+                    android:orientation="horizontal"
+                    >
+
+                    <TextView
+                        android:id="@+id/txtdetailNumber"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/poppins_regular"
+                        android:text="txtdetailNumber"
+                        android:textAlignment="center"
+                        android:textColor="@color/light_gray"
+                        android:textSize="20sp"
+                         />
+
+                    <TextView
+                        android:id="@+id/txtdetailID"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/light_gray"
+                        android:visibility="gone"
+                        android:textSize="20sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/linearLayout5"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginHorizontal="20dp"
+                    android:layout_marginTop="12dp"
+                    android:background="@drawable/shape_stats_new"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintHorizontal_bias="0.6"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/linearLayout4">
+
+                    <TextView
+                        android:id="@+id/txtdetailURL"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/poppins_regular"
+                        android:text="txtdetailURL"
+                        android:textAlignment="center"
+                        android:textColor="@color/light_gray"
+                        android:textSize="20sp"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toEndOf="@+id/textView4"
+                        tools:layout_editor_absoluteY="307dp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginHorizontal="20dp"
+                    android:layout_marginTop="12dp"
+                    android:background="@drawable/shape_stats"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintHorizontal_bias="0.6"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/linearLayout4">
+
+                    <TextView
+                        android:id="@+id/txttimeStamp"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/poppins_regular"
+                        android:text="txttimeStamp"
+                        android:textAlignment="center"
+                        android:textColor="@color/light_gray"
+                        android:textSize="20sp"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toEndOf="@+id/textView4"
+                        tools:layout_editor_absoluteY="307dp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="15dp"
+                    android:layout_marginHorizontal="20dp"
+                    android:orientation="horizontal">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginRight="12dp"
+                        android:orientation="vertical"
+                        android:background="@drawable/shape_stats"
+                        android:gravity="center"
+                        >
+
+                        <RelativeLayout
+                            android:layout_width="100dp"
+                            android:layout_height="100dp">
+                            <!-- Circular Progress Bar -->
+                            <!-- Text inside the Progress Bar -->
+                            <ProgressBar
+                                android:id="@+id/circularProgressBar"
+                                style="?android:attr/progressBarStyleHorizontal"
+                                android:layout_width="match_parent"
+                                android:layout_height="116dp"
+                                android:background="@drawable/circle_shape_progress"
+                                android:indeterminate="false"
+                                android:max="96"
+                                android:progressDrawable="@drawable/circle_progress_bar" />
+
+                            <TextView
+                                android:id="@+id/progressText"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_centerInParent="true"
+                                android:fontFamily="@font/poppins_semibold"
+                                android:gravity="center"
+                                android:text="0 / 96"
+                                android:textColor="@color/Unselected"
+                                android:textSize="18sp" />
+
+                        </RelativeLayout>
+
+
+                        <TextView
+                            android:id="@+id/txtAnalysis2"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:fontFamily="@font/poppins_semibold"
+                            android:text="Analysis"
+                            android:textAlignment="center"
+                            android:textAllCaps="false"
+                            android:textColor="@color/white"
+                            android:textSize="16sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="vertical">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+
+                            android:background="@drawable/shape_stats"
+                            android:gravity="center_vertical"
+                            >
+
+                            <ImageView
+                                android:id="@+id/IV_analysis"
+                                android:layout_width="40dp"
+                                android:layout_height="40dp"
+                                android:layout_marginRight="8dp"
+                                />
+
+                            <TextView
+                                android:id="@+id/txtAnalysis"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="@font/poppins_semibold"
+                                android:text="Analysis"
+                                android:textAlignment="center"
+                                android:textColor="@color/white"
+                                android:textSize="14sp" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="12dp"
+                            android:gravity="center"
+                            android:layout_weight="1">
+
+                            <Button
+                                android:id="@+id/btnDeleteSMS"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:background="@drawable/custom_button3"
+                                android:fontFamily="@font/poppins_semibold"
+                                android:text="Move to Spam / Delete SMS"
+                                android:textAlignment="center"
+                                android:textAllCaps="false"
+                                android:textColor="@color/light_gray"
+                                android:textSize="13sp" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/linearLayout6"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintHorizontal_bias="0.0"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/linearLayout7">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="15dp"
+                        android:paddingHorizontal="20dp">
+
+                        <Button
+                            android:id="@+id/btnBack"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            style="@android:style/Widget.Material.Button"
+                            android:layout_marginRight="7.5dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/custom_button3"
+                            android:fontFamily="@font/poppins_semibold"
+                            android:text="Back"
+                            android:textAllCaps="false"
+                            android:textColor="@color/white"
+                            android:textSize="16sp"
+                             />
+
+                        <Button
+                            android:id="@+id/btndelete"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:layout_marginLeft="7.5dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/custom_button3"
+                            android:fontFamily="@font/poppins_semibold"
+                            android:text="Delete Result"
+                            android:textAllCaps="false"
+                            android:textColor="@color/white"
+                            android:textSize="16sp"
+                             />
+                    </LinearLayout>
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/linearLayout12"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="30dp"
+                    android:gravity="center_vertical"
+                    android:orientation="vertical"
+                    app:layout_constraintEnd_toEndOf="@+id/IV_detailImage"
+                    app:layout_constraintHorizontal_bias="1.0"
+                    app:layout_constraintStart_toStartOf="@+id/gridLayout"
+                    app:layout_constraintTop_toBottomOf="@+id/gridLayout">
+
+                    <TextView
+                        android:id="@+id/textView5"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/poppins_semibold"
+                        android:text="VirusTotal Results:"
+                        android:textAlignment="center"
+                        android:textColor="@color/light_gray"
+                        android:textSize="25dp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" >
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight=".5"
+                            android:fontFamily="@font/poppins_bold"
+                            android:gravity="center"
+                            android:padding="8dp"
+                            android:textAlignment="center"
+                            android:textColor="@color/white"
+                            android:textSize="14sp" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:fontFamily="@font/poppins_bold"
+                            android:gravity="center"
+                            android:padding="8dp"
+                            android:text="Engine Name"
+                            android:textAlignment="center"
+                            android:textColor="@color/white"
+                            android:textSize="14sp" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:visibility="gone"
+                            android:gravity="center"
+                            android:layout_weight="1"
+                            android:padding="8dp"
+                            android:text="Method"
+                            android:textAlignment="center"
+                            android:textColor="@android:color/black"
+                            android:textSize="12sp" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:fontFamily="@font/poppins_bold"
+                            android:gravity="center"
+                            android:padding="8dp"
+                            android:text="Category"
+                            android:textAlignment="center"
+                            android:textColor="@color/white"
+                            android:textSize="14sp" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:fontFamily="@font/poppins_bold"
+                            android:gravity="center"
+                            android:padding="8dp"
+                            android:text="Result"
+                            android:textAlignment="center"
+                            android:textColor="@color/white"
+                            android:textSize="14sp" />
+                    </LinearLayout>
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/recycler_view"
+                        android:layout_width="match_parent"
+                        android:layout_height="300dp" >
+
+                    </androidx.recyclerview.widget.RecyclerView>
+                </LinearLayout>
+            </LinearLayout>
+
+
+
+
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </ScrollView>
+
+</FrameLayout>

@@ -1,0 +1,90 @@
+<!-- res/layout/dialog_feedback.xml -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:padding="20dp"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/light_gray"
+    android:gravity="center">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="30dp"
+        android:fontFamily="@font/poppins_medium"
+        android:paddingBottom="8dp"
+        android:text="Share your thoughts"
+        android:textAlignment="center"
+        android:textSize="24sp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/poppins_medium"
+        android:paddingBottom="8dp"
+        android:text="Rate your experience on LinkGuard"
+        android:textAlignment="center"
+        android:textColor="@color/black"
+        android:textSize="18sp" />
+
+    <RatingBar
+        android:id="@+id/rating_bar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="50dp"
+        android:numStars="5"
+        android:progressTint="#FFEB3B"
+        android:stepSize="1.0" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/poppins_medium"
+        android:paddingBottom="8dp"
+        android:text="Tell us how we’re doing and how we can get better."
+        android:textColor="@color/black"
+        android:textSize="18sp" />
+
+    <EditText
+        android:id="@+id/feedback_input"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="30dp"
+        android:fontFamily="@font/poppins_regular"
+        android:gravity="top"
+        android:hint="Enter your feedback"
+        android:minLines="3"
+        android:textColor="@color/black" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center">
+
+        <Button
+            android:id="@+id/btnGoToSettings"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginRight="20dp"
+            android:background="@drawable/custom_button3"
+            android:fontFamily="@font/poppins_semibold"
+            android:text="Close"
+            android:textAllCaps="false"
+            android:textColor="@color/Unselected"
+            android:textSize="14sp" />
+
+        <Button
+            android:id="@+id/btnSubmit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@drawable/custom_button4"
+            android:fontFamily="@font/poppins_semibold"
+            android:text="Submit"
+            android:textAllCaps="false"
+            android:textColor="@color/Unselected"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+</LinearLayout>

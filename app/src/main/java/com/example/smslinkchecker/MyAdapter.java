@@ -69,14 +69,6 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
                 holder.imageView.setImageBitmap(null); // Or a placeholder image
             }
 
-            JSONObject jsonObject = new JSONObject(String.valueOf(JSONResponse_id.get(position)));
-            int malicious = jsonObject.getJSONObject("data").getJSONObject("attributes")
-                    .getJSONObject("stats").getInt("malicious");
-            int suspicious = jsonObject.getJSONObject("data").getJSONObject("attributes")
-                    .getJSONObject("stats").getInt("suspicious");
-            int harmless = jsonObject.getJSONObject("data").getJSONObject("attributes")
-                    .getJSONObject("stats").getInt("harmless");
-
             String analysisResult = analysis_id.get(position).toString();
             // Set analysis text and color based on analysis
             if (analysisResult.equals("3")) {
@@ -89,8 +81,8 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
                 holder.IV_analysis.setImageResource(R.drawable.warning_red);
             } else if (analysisResult.equals("2")) {
                 holder.txtAnalsis.setText("URL is Suspicious");
-                holder.txtAnalsis.setTextColor(ContextCompat.getColor(context, R.color.red));
-                holder.IV_analysis.setImageResource(R.drawable.warning_red);
+                holder.txtAnalsis.setTextColor(ContextCompat.getColor(context, R.color.darkyellow));
+                holder.IV_analysis.setImageResource(R.drawable.suspicious_icon);
             } else {
                 holder.txtAnalsis.setText("URL is Harmless");
                 holder.txtAnalsis.setTextColor(ContextCompat.getColor(context, R.color.green));

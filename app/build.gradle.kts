@@ -1,5 +1,12 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
+}
+
+// Load properties from local.properties
+val properties = Properties().apply {
+    load(project.rootProject.file("local.properties").inputStream())
 }
 
 android {
@@ -14,6 +21,14 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Reading the API keys from local.properties
+        // Accessing the API keys
+        val vtApiKey = properties.getProperty("VT_API_KEY", "")
+        buildConfigField("String", "VT_API_KEY", "\"$vtApiKey\"")
+
+        val ssApiKey = properties.getProperty("SS_API_KEY", "")
+        buildConfigField("String", "SS_API_KEY", "\"$ssApiKey\"")
     }
 
     buildTypes {
@@ -26,6 +41,7 @@ android {
         }
     }
     buildFeatures {
+        buildConfig = true
         viewBinding = true
     }
     compileOptions {
@@ -44,8 +60,5 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
-    implementation ("com.squareup.okhttp3:okhttp:4.9.2")
-    implementation ("com.github.bumptech.glide:glide:4.12.0")
-    annotationProcessor ("com.github.bumptech.glide:compiler:4.12.0")
-
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
 }

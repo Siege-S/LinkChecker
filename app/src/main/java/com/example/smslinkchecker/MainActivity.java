@@ -3,11 +3,14 @@ package com.example.smslinkchecker;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Toast;
 
 import android.Manifest;
@@ -59,11 +62,43 @@ public class MainActivity extends AppCompatActivity {
             return true;
         });
 
+        // Check if the code has already run (delete this after)
+//        SharedPreferences prefs = getSharedPreferences("MyAppPreferences", MODE_PRIVATE);
+//        boolean hasRunBefore = prefs.getBoolean("hasInsertedData", false);
+//
+//        if (!hasRunBefore) {
+//            // Run the code you want to execute only once
+//            DBHelper db = new DBHelper(this);
+//            db.insertOfflineTbl("ogpe.cc", "sieger");
+//            db.insertOfflineTbl("google.com", "sieger");
+//
+//            // Mark that the code has run
+//            SharedPreferences.Editor editor = prefs.edit();
+//            editor.putBoolean("hasInsertedData", true);
+//            editor.apply();
+//        }
+
+        // Allow content behind the notch
+        // Android 9.0 (API level 28) Above Only!
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            WindowManager.LayoutParams layoutParams = getWindow().getAttributes();
+            layoutParams.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+            getWindow().setAttributes(layoutParams);
+        }
+
+        // SYSTEM_UI_FLAG_FULLSCREEN // Hide the status bar
+        // SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN // Let the layout expand into status bar
+        // SYSTEM_UI_FLAG_LAYOUT_STABLE // avoid abrupt layout changes during toggling of status and navigation bars
+        // SYSTEM_UI_FLAG_HIDE_NAVIGATION // Hide the navigation bar
+        // SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION; // Let the layout expand into navigation bar
+        // SYSTEM_UI_FLAG_IMMERSIVE_STICKY // Keeps the app in immersive mode by preventing accidental gestures from immediately revealing the system bars.
         getWindow().getDecorView().setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_FULLSCREEN |
                         View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION |
                         View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
                         View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
         );
+
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -71,11 +106,10 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
+        // Request Permission
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECEIVE_SMS) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECEIVE_SMS}, REQUEST_SMS_PERMISSION);
         }
-
-//        checkNotificationPermission();
 
     } // onCreate
 
@@ -110,6 +144,7 @@ public class MainActivity extends AppCompatActivity {
                 } else {
                     // User checked "Don't ask again" or denied multiple times
                     Toast.makeText(this, "Permission to read SMS was denied permanently. Please enable it in app settings.", Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, "Permission >> Allow SMS Permission", Toast.LENGTH_LONG).show();
                     // Optionally, redirect the user to app settings
                     openAppSettings();
                 }
@@ -119,49 +154,29 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
-    private void checkNotificationPermission() {
-        if (!NotificationManagerCompat.from(this).areNotificationsEnabled()) {
-            // Notifications are not enabled
-            // Prompt the user to grant notification permission
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setTitle("Enable Notifications");
-            builder.setMessage("This app requires notification permission to function properly. Please enable it in settings.");
-            builder.setPositiveButton("Go to Settings", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    // Open app settings
-                    openNotificationSettings();
-                }
-            });
-            builder.setNegativeButton("Cancel", null);
-            builder.show();
-        } else {
-            // Notifications are enabled
-            // Proceed with your notification logic
-        }
-    }
 
-    private void openNotificationSettings() {
-        Intent intent = new Intent();
-        intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-        Uri uri = Uri.fromParts("package", getPackageName(), null);
-        intent.setData(uri);
-        startActivityForResult(intent, REQUEST_NOTIFICATION_PERMISSION);
-    }
     private void openAppSettings() {
         Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
         Uri uri = Uri.fromParts("package", getPackageName(), null);
         intent.setData(uri);
         startActivity(intent);
+        // Exit the app
+        finish();
     }
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == REQUEST_NOTIFICATION_PERMISSION) {
-            // Check if notification permission is granted after returning from settings
-            if (NotificationManagerCompat.from(this).areNotificationsEnabled()) {
-                // Notification permission granted, proceed with your notification logic
-            }
+
+//    @Override
+//    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+//        super.onActivityResult(requestCode, resultCode, data);
+//        if (requestCode == REQUEST_NOTIFICATION_PERMISSION) {
+//            // Check if notification permission is granted after returning from settings
+//            if (NotificationManagerCompat.from(this).areNotificationsEnabled()) {
+//                // Notification permission granted, proceed with your notification logic
+//            }
+//        }
+//    }
+    public void setBottomNavigationEnabled(boolean enabled) {
+        for (int i = 0; i < binding.bottomNavigationView.getMenu().size(); i++) {
+            binding.bottomNavigationView.getMenu().getItem(i).setEnabled(enabled);
         }
     }
 

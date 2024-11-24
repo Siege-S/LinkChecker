@@ -1,5 +1,6 @@
 package com.example.smslinkchecker;
 
+import android.annotation.SuppressLint;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
@@ -8,7 +9,10 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
@@ -21,6 +25,10 @@ import android.widget.Toast;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -46,6 +54,11 @@ public class DetailMessageFragment extends Fragment {
     float scaleFactor = 1.0f;
     private static final float MIN_ZOOM = 1.0f; // Minimum zoom level
     private static final float MAX_ZOOM = 5.0f; // Maximum zoom level
+
+    //JSON Results
+    private RecyclerView recyclerView;
+    private List<ScanResult> scanResults;
+    private ScanResultAdapter adapter;
 
     public DetailMessageFragment() {
         // Required empty public constructor
@@ -75,17 +88,16 @@ public class DetailMessageFragment extends Fragment {
         }
     }
 
+    @SuppressLint("SetTextI18n")
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_detail_message, container, false);
-
         // Use mSender, mMessage, and mImage as needed
         TextView idTextView = view.findViewById(R.id.txtdetailID);
         TextView senderTextView = view.findViewById(R.id.txtdetailNumber);
         TextView urlTextView = view.findViewById(R.id.txtdetailURL);
-        TextView jsonTextView = view.findViewById(R.id.txtJSON);
 
         // Display
         imageView = view.findViewById(R.id.IV_detailImage);
@@ -100,11 +112,40 @@ public class DetailMessageFragment extends Fragment {
             imageView.setImageResource(R.drawable.ic_launcher_foreground); // Or handle the case where there's no image
         }
 
+        // Initialize RecyclerView for JSON results
+        recyclerView = view.findViewById(R.id.recycler_view);
+        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        // Initialize the list
+        scanResults = new ArrayList<>();
+        try {
+            JSONObject jsonResponse = new JSONObject(mJSON);
+            JSONObject results = jsonResponse.getJSONObject("data").getJSONObject("attributes").getJSONObject("results");
+            Iterator<String> keys = results.keys();
+            while (keys.hasNext()) {
+                String key = keys.next();
+                JSONObject engineResult = results.getJSONObject(key);
+                ScanResult result = new ScanResult(
+                        engineResult.getString("engine_name"),
+                        engineResult.getString("method"),
+                        engineResult.getString("category"),
+                        engineResult.getString("result")
+                );
+                scanResults.add(result);
+            }
+
+            // Setup the RecyclerView adapter with the processed results
+            adapter = new ScanResultAdapter(scanResults);
+            recyclerView.setAdapter(adapter);
+
+        } catch (Exception e) {
+            Log.e("JSONError", "Error processing JSON response: " + e.getMessage());
+            e.printStackTrace(); // Handle exceptions properly in production code
+        }
         //JSON parsing
         try {
             JSONObject jsonObject = new JSONObject(mJSON);
             JSONObject results = jsonObject.getJSONObject("data").getJSONObject("attributes").getJSONObject("results");
-            jsonTextView.setText(results.toString(4));
+//            jsonTextView.setText(results.toString(4));
 
             // Virustotal stats
             TextView txtmalicious = view.findViewById(R.id.txtJSONMalicious);
@@ -168,9 +209,20 @@ public class DetailMessageFragment extends Fragment {
             }
         });
 
+        // Buttons
         Button btndelete = view.findViewById(R.id.btndelete);
         Button btnBack = view.findViewById(R.id.btnBack);
+        Button btnDeleteSMS = view.findViewById(R.id.btnDeleteSMS);
 
+        btnDeleteSMS.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // In your Activity or Fragment where you want to show the dialog
+//                String phoneNumber = mSender;
+//                ImageDialogFragment imageDialog = ImageDialogFragment.newInstance(phoneNumber);
+//                imageDialog.show(getChildFragmentManager(), "ImageDialog");
+            }
+        });
         btnBack.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -205,6 +257,7 @@ public class DetailMessageFragment extends Fragment {
                 Toast.makeText(getContext(), "Record deleted", Toast.LENGTH_SHORT);
             }
         });
+
         return view;
     }
 

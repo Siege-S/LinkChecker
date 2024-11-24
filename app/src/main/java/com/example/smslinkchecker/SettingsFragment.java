@@ -2,6 +2,7 @@ package com.example.smslinkchecker;
 
 import static com.example.smslinkchecker.MainActivity.REQUEST_SMS_PERMISSION;
 
+import android.app.AlertDialog;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -21,6 +22,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CompoundButton;
+import android.widget.EditText;
+import android.widget.RatingBar;
 import android.widget.Switch;
 import android.widget.Toast;
 import android.Manifest;
@@ -42,6 +45,7 @@ public class SettingsFragment extends Fragment {
     private String mParam1;
     private String mParam2;
 
+    private static final String email = "linkguard0311@gmail.com";
     public SettingsFragment() {
         // Required empty public constructor
     }
@@ -83,23 +87,6 @@ public class SettingsFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
-        Button btnAutoStart = view.findViewById(R.id.btnAutoStart);
-        Button btnNotification = view.findViewById(R.id.btnNotification);
-        btnAutoStart.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                autoStartSettings();
-            }
-        });
-        btnNotification.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                openNotificationSettings();
-            }
-        });
-
-
         switchPermission = view.findViewById(R.id.switchPermission);
 
         // Check current permission status and update the switch state
@@ -119,10 +106,144 @@ public class SettingsFragment extends Fragment {
                 }
             }
         });
+        // Send Feedback
+        View layoutFeedback = view.findViewById(R.id.layoutFeedback);
+        View layoutNotification = view.findViewById(R.id.layoutNotification);
+        View layoutAutoStart = view.findViewById(R.id.layoutAutoStart);
+        View layoutPermission = view.findViewById(R.id.layoutPermission);
+        View layoutCredits = view.findViewById(R.id.layoutCredits);
+        layoutFeedback.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //Dialog Feedback
+//                FeedbackDialogFragment feedbackDialog = new FeedbackDialogFragment();
+//                feedbackDialog.show(getChildFragmentManager(), "feedbackDialog");
+                feedback_dialog();
+            }
+        });
+        layoutNotification.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                openNotificationSettings();
+            }
+        });
+        layoutAutoStart.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                LayoutInflater inflater = LayoutInflater.from(getContext());
+                View view = inflater.inflate(R.layout.dialog_autostart, null);
+                Button btnGoToSettings = view.findViewById(R.id.btnGoToSettings);
+                Button btnClose = view.findViewById(R.id.btnClose);
+
+                AlertDialog alertDialog = new AlertDialog.Builder(getContext())
+                        .setView(view)
+                        .create();
+
+                alertDialog.show();
+                btnGoToSettings.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        autoStartSettings();
+                    }
+                });
+                btnClose.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        alertDialog.dismiss();
+                    }
+                });
+            }
+
+        });
+        layoutPermission.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(getContext(), "User must manually disable SMS permissions.", Toast.LENGTH_SHORT).show();
+                openAppSettings();
+            }
+        });
+        layoutCredits.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                credits_dialog();
+            }
+        });
+    }
+
+    public void credits_dialog(){
+        LayoutInflater inflater = LayoutInflater.from(getContext());
+        View view = inflater.inflate(R.layout.dialog_about, null);
+
+        Button btnClose = view.findViewById(R.id.btnGoToSettings);
+
+        AlertDialog alertDialog = new AlertDialog.Builder(getContext())
+                .setView(view)
+                .create();
+
+        btnClose.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                alertDialog.dismiss();
+            }
+        });
+
+        alertDialog.show();
+    }
+
+    public void feedback_dialog() {
+        LayoutInflater inflater = LayoutInflater.from(getContext());
+        View view = inflater.inflate(R.layout.dialog_feedback, null);
+
+        RatingBar rating_bar = view.findViewById(R.id.rating_bar);
+        EditText feedback_input = view.findViewById(R.id.feedback_input);
+        Button btnClose = view.findViewById(R.id.btnGoToSettings);
+        Button btnSubmit = view.findViewById(R.id.btnSubmit);
+
+        AlertDialog alertDialog = new AlertDialog.Builder(getContext())
+                .setView(view)
+                .create();
+
+        btnClose.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                alertDialog.dismiss();
+            }
+        });
+        btnSubmit.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (feedback_input.getText().toString().isEmpty() || rating_bar.getRating() == 0) {
+                    Toast.makeText(getContext(), "Please enter your feedback and rating.", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(getContext(), "Send feedback via Gmail", Toast.LENGTH_SHORT).show();
+                    sendFeedbackViaEmail(feedback_input.getText().toString(), rating_bar.getRating());
+                    alertDialog.dismiss();
+                }
+            }
+        });
+        alertDialog.show();
+    }
+    private void sendFeedbackViaEmail(String feedbackText, float ratingValue) {
+        // Define the email subject and body
+        String subject = "App Feedback";
+        String body = "Feedback: " + feedbackText + "\nRating: " + ratingValue + " stars";
+
+        // Create the email Intent
+        Intent emailIntent = new Intent(Intent.ACTION_SEND);
+        emailIntent.setType("message/rfc822");
+        emailIntent.putExtra(Intent.EXTRA_EMAIL, new String[]{email});
+        emailIntent.putExtra(Intent.EXTRA_SUBJECT, subject);
+        emailIntent.putExtra(Intent.EXTRA_TEXT, body);
+
+        // Start the email intent
+        try {
+            startActivity(Intent.createChooser(emailIntent, "Send Feedback via:"));
+        } catch (android.content.ActivityNotFoundException ex) {
+            Toast.makeText(getActivity(), "No email clients installed.", Toast.LENGTH_SHORT).show();
+        }
     }
     private void openNotificationSettings() {
         Intent intent = new Intent();
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             // For Android 8.0 and above
             intent.setAction(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS);
@@ -133,7 +254,6 @@ public class SettingsFragment extends Fragment {
             intent.addCategory(Intent.CATEGORY_DEFAULT);
             intent.setData(Uri.parse("package:" + getActivity().getPackageName()));
         }
-
         startActivity(intent);
     }
     private void openAppSettings() {
@@ -141,6 +261,8 @@ public class SettingsFragment extends Fragment {
         Uri uri = Uri.fromParts("package", getContext().getPackageName(), null);
         intent.setData(uri);
         startActivity(intent);
+        // Exit the app after the settings screen opens
+        requireActivity().finish();
     }
 
     private void autoStartSettings() {
@@ -163,6 +285,8 @@ public class SettingsFragment extends Fragment {
         } else {
             // Show a fallback message or open general settings if the specific Intent fails
             startActivity(new Intent(Settings.ACTION_SETTINGS));
+//            startActivity(new Intent(Settings.ACTION_SEARCH_SETTINGS));
+//            startActivity(new Intent(Settings.ACTION_MANAGE_APPLICATIONS_SETTINGS));
         }
     }
 }

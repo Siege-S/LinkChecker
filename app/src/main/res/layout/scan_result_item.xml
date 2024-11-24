@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/PrimaryBlue"
+    android:gravity="center_vertical"
+    android:orientation="vertical"
+    >
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" >
+
+        <TextView
+            android:id="@+id/tv_count"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight=".5"
+            android:fontFamily="@font/poppins_bold"
+            android:gravity="center"
+            android:padding="8dp"
+            android:textAlignment="center"
+            android:textColor="@color/white"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/tv_engine_name"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:fontFamily="@font/poppins_semibold"
+            android:gravity="center"
+            android:padding="8dp"
+            android:text="Engine Name"
+            android:textAlignment="center"
+            android:textColor="@color/white"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/tv_method"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:visibility="gone"
+            android:gravity="center"
+            android:layout_weight="1"
+            android:padding="8dp"
+            android:text="Method"
+            android:textAlignment="center"
+            android:textColor="@android:color/black"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/tv_category"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:fontFamily="@font/poppins_semibold"
+            android:gravity="center"
+            android:padding="8dp"
+            android:text="Category"
+            android:textAlignment="center"
+            android:textColor="@color/white"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/tv_result"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:fontFamily="@font/poppins_semibold"
+            android:gravity="center"
+            android:padding="8dp"
+            android:text="Result"
+            android:textAlignment="center"
+            android:textColor="@color/white"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+
+</LinearLayout>
