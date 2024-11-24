@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Background color with transparency -->
+    <solid android:color="@color/FragmentBackgroundColor"/> <!-- 50% opacity -->
+    <!-- Corner radius -->
+
+<!--    <corners android:radius="20dp" />-->
+    <!-- Border -->
+    <!-- 50% opacity -->
+    <stroke
+        android:color="#51999999"
+        android:width="1px"
+        >
+    </stroke>
+
+    <padding
+        android:left="10dp"
+        android:top="10dp"
+        android:right="10dp"
+        android:bottom="10dp" />
+</shape>

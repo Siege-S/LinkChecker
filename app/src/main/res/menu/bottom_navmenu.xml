@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/home"
+        android:icon="@drawable/baseline_home_24"
+        android:title="Home" />
+    <item
+        android:id="@+id/messages"
+        android:icon="@drawable/baseline_message_24"
+        android:title="Scanned SMS" />
+
+<!--    <item-->
+<!--        android:id="@+id/contacts"-->
+<!--        android:icon="@drawable/info"-->
+<!--        android:title="Contacts" />-->
+
+    <item
+        android:id="@+id/settings"
+        android:icon="@drawable/settings"
+        android:title="Settings" />
+</menu>

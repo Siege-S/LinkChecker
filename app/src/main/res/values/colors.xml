@@ -2,4 +2,31 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="gray">#484848</color>
+    <color name="light_gray">#EEEEEE</color>
+    <color name="green">#4CAF50</color>
+    <color name="peach">#fd644f</color>
+    <color name="red">#D50000</color>
+    <color name="settings_gray">#E1E1E1</color>
+    <color name="blue">#2196F3</color>
+    <color name="yellow">#FFEB3B</color>
+    <color name="darkyellow">#DDCC33</color>
+
+    //Primary Colors
+    <color name="PriOrange">#ff7f00</color>
+    <color name="PrimaryBlue">#022b50</color>
+    <color name="PrimaryBlue2">#173958</color>
+    <color name="SecondaryBLue">#02518c</color>
+    <color name="SecondaryBLue2">#00508c</color>
+    <color name="TertiaryBlue">#0c59ee</color>
+    <color name="PrimaryGreen">#36c761</color>
+    <color name="SplashScreenColorBlue">#041C34</color>
+
+    //color for selected item
+    <color name="Selected">#ff7f00</color>
+    <color name="Unselected">#F7F7F7</color>
+
+    // Background
+    <color name="BackgroundColor">#6C130E</color>
+    <color name="FragmentBackgroundColor">#52100C</color>
 </resources>
