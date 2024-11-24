@@ -454,8 +454,15 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
 
                                         new Handler(Looper.getMainLooper()).post(() -> {
                                             String analysis = NotifyResult(context, url, analysisResultJSON);
-                                            dbHelper.insertData(url, sender, apiUrl, analysis, image, analysisResultJSON);
                                             dbHelper.deleteRecordById(id);
+
+                                            if(dbHelper.duplicateURL(url, sender)){
+                                                System.out.println("Message Fragment: Duplicate Entry - (" + sender + " : " + url + ") Updating Data. . .");
+                                                dbHelper.updateData(url, sender, apiUrl, analysis, image, analysisResultJSON);
+                                            } else {
+                                                System.out.println("Message Fragment: New Entry - (" + sender + " : " + url + ") Inserting Data. . .");
+                                                dbHelper.insertData(url, sender, apiUrl, analysis, image, analysisResultJSON);
+                                            }
 
                                             // Decrement the remaining URLs count
                                             if (remainingUrls.decrementAndGet() == 0) {
