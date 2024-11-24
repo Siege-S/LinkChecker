@@ -2,12 +2,15 @@ package com.example.smslinkchecker;
 
 import static android.R.layout.simple_spinner_item;
 
+import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 
 import androidx.core.app.NotificationCompat;
+import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
@@ -35,6 +38,7 @@ import android.os.Looper;
 import android.text.Layout;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.SoundEffectConstants;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -51,13 +55,24 @@ import org.json.JSONObject;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -66,6 +81,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class MessageFragment extends Fragment implements RecyclerViewInterface {
     private static final String CHANNEL_ID = "1001";
+    public static final String API_KEY = BuildConfig.VT_API_KEY;
+    public static final String ss_API_KEY = BuildConfig.SS_API_KEY;
     @Override
     public void onItemClick(int position) {
         FragmentManager fragmentManager = getActivity().getSupportFragmentManager();
@@ -235,21 +252,20 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
 
                         // Reload the Spinner data after deletion
                         List<String> updatedUrls = dbHelper.getOfflineUrls(); // Implement this to fetch URLs again
-                        ArrayAdapter<String> newAdapter = new ArrayAdapter<>(getContext(), simple_spinner_item, updatedUrls);
+                        ArrayAdapter<String> newAdapter = new ArrayAdapter<>(getContext(), R.layout.spinner_item, updatedUrls);
                         newAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
                         int count = dbHelper.getOfflineDataCount();
                         txtDetectedURL.setText("When Offline LinkGuard Detected "+ count + " URL");
                         if(count == 0){
-                            refreshData();
                             layoutSpinnerButton.setVisibility(View.GONE);
                         } else {
                             layoutSpinnerButton.setVisibility(View.VISIBLE);
                         }
-
+                        refreshData();
                         // Set the updated adapter to the Spinner
                         spin_url.setAdapter(newAdapter);
 
-                        Toast.makeText(getContext(), selectedItem + " Deleted", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getContext(), selectedItem + " Removed", Toast.LENGTH_SHORT).show();
                     }
                 });
             }
@@ -264,24 +280,12 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
             @Override
             public void onClick(View v) {
                 Context context = getContext();
-                // Disable while OfflineScanning is in progress
-                btnScanOffline.setEnabled(false);
-                btnRemoveItem.setEnabled(false);
-                spin_Date.setEnabled(false);
-                spin_Result.setEnabled(false);
-                layoutProcessText.setVisibility(View.VISIBLE); // yung umiikot
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    recyclerView.setRenderEffect(RenderEffect.createBlurEffect(30, 30, Shader.TileMode.MIRROR));
-                    layoutSortFilter.setRenderEffect(RenderEffect.createBlurEffect(10, 10, Shader.TileMode.MIRROR));
+                if(isInternetConnected(context)){
+                    processOfflineData(context);
+                } else {
+                    Toast.makeText(context, "No Internet Connection", Toast.LENGTH_SHORT).show();
                 }
-                // true to disable touch events
-                recyclerView.setOnTouchListener((view, event) -> true);
-                Toast.makeText(getContext(), "Please wait while LinkGuard is processing the data", Toast.LENGTH_LONG).show();
 
-                if (getActivity() instanceof MainActivity) {
-                    ((MainActivity) getActivity()).setBottomNavigationEnabled(false);
-                }
-                processOfflineData(context);
             }
         }); // Offline Feature
 
@@ -375,10 +379,50 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
         adapter.notifyDataSetChanged();
     }
 
+    private void disableButtons() {
+        // Disable while OfflineScanning is in progress
+        btnScanOffline.setEnabled(false);
+        btnRemoveItem.setEnabled(false);
+        btnScanOffline.setBackground(getResources().getDrawable(R.drawable.shape_stats));
+        btnRemoveItem.setBackground(getResources().getDrawable(R.drawable.shape_stats));
+        spin_Date.setEnabled(false);
+        spin_Result.setEnabled(false);
+        layoutProcessText.setVisibility(View.VISIBLE); // yung umiikot
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            recyclerView.setRenderEffect(RenderEffect.createBlurEffect(30, 30, Shader.TileMode.MIRROR));
+            layoutSortFilter.setRenderEffect(RenderEffect.createBlurEffect(10, 10, Shader.TileMode.MIRROR));
+        }
+        // true to disable touch events
+        recyclerView.setOnTouchListener((view, event) -> true);
+        Toast.makeText(getContext(), "Please wait while LinkGuard is processing the data", Toast.LENGTH_LONG).show();
+
+        if (getActivity() instanceof MainActivity) {
+            ((MainActivity) getActivity()).setBottomNavigationEnabled(false);
+        }
+    }
+    private void enableButtons() {
+        // Disable while OfflineScanning is in progress
+        btnScanOffline.setEnabled(true);
+        btnRemoveItem.setEnabled(true);
+        btnScanOffline.setBackground(getResources().getDrawable(R.drawable.custom_button1));
+        btnRemoveItem.setBackground(getResources().getDrawable(R.drawable.custom_button2));
+        spin_Date.setEnabled(true);
+        spin_Result.setEnabled(true);
+        layoutProcessText.setVisibility(View.GONE); // yung umiikot
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            recyclerView.setRenderEffect(null);
+            layoutSortFilter.setRenderEffect(null);
+        }
+        // true to disable touch events
+        recyclerView.setOnTouchListener((view, event) -> false);
+        if (getActivity() instanceof MainActivity) {
+            ((MainActivity) getActivity()).setBottomNavigationEnabled(true);
+        }
+    }
     private void processOfflineData(Context context) {
         DBHelper dbHelper = new DBHelper(context);
         Cursor cursor = dbHelper.getOfflineData();
-        recyclerView.setOnTouchListener((view, event) -> true);
+        disableButtons();
         if (cursor != null) {
             int totalUrls = cursor.getCount();  // Total number of URLs to process
             final AtomicInteger remainingUrls = new AtomicInteger(totalUrls);
@@ -390,7 +434,6 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
 
                 if (urlIndex != -1 && idIndex != -1) {
                     do {
-                        SmsListener smsListener = new SmsListener();
                         String url = cursor.getString(urlIndex);
                         String sender = cursor.getString(senderIndex);
                         int id = cursor.getInt(idIndex);
@@ -398,38 +441,25 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
                         ExecutorService executorService = Executors.newSingleThreadExecutor();
                         executorService.execute(() -> {
                             try {
-                                String apiUrl = smsListener.SnapshotmachineAPI(url);
-                                String analysisId = smsListener.processUrls(context, url);
+                                String apiUrl = SnapshotmachineAPI(url);
+                                String analysisId = processUrls(context, url);
 
                                 if (analysisId != null) {
-                                    String analysisResultJSON = smsListener.getAnalysis(analysisId);
+                                    String analysisResultJSON = getAnalysis(analysisId);
 
                                     if (analysisResultJSON != null) {
                                         InputStream in = new URL(apiUrl).openStream();
                                         Bitmap bitmap = BitmapFactory.decodeStream(in);
-                                        byte[] image = smsListener.getBitmapAsByteArray(bitmap);
+                                        byte[] image = getBitmapAsByteArray(bitmap);
 
                                         new Handler(Looper.getMainLooper()).post(() -> {
-                                            String analysis = smsListener.NotifyResult(context, url, analysisResultJSON);
+                                            String analysis = NotifyResult(context, url, analysisResultJSON);
                                             dbHelper.insertData(url, sender, apiUrl, analysis, image, analysisResultJSON);
                                             dbHelper.deleteRecordById(id);
 
                                             // Decrement the remaining URLs count
                                             if (remainingUrls.decrementAndGet() == 0) {
-                                                if (getActivity() instanceof MainActivity) {
-                                                    ((MainActivity) getActivity()).setBottomNavigationEnabled(true);
-
-                                                }
-                                                // Enable after OfflineScan is completed
-                                                btnScanOffline.setEnabled(true);
-                                                btnRemoveItem.setEnabled(true);
-                                                layoutProcessText.setVisibility(View.GONE); // yung umiikot
-                                                layoutOfflineProcess.setVisibility(View.GONE);
-                                                recyclerView.setOnTouchListener((view, event) -> false); // true to disable touch events
-                                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                                                    recyclerView.setRenderEffect(null);
-                                                    layoutSortFilter.setRenderEffect(null);
-                                                }
+                                                enableButtons();
                                                 refreshData(); // Call refreshData when all URLs are processed
                                             }
                                         });
@@ -443,22 +473,12 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
 
                                         if (remainingUrls.decrementAndGet() == 0) {
                                             // Enable after OfflineScan is completed
-                                            btnScanOffline.setEnabled(true);
-                                            btnRemoveItem.setEnabled(true);
-                                            spin_Date.setEnabled(true);
-                                            spin_Result.setEnabled(true);
-                                            layoutProcessText.setVisibility(View.GONE); // yung umiikot
-                                            layoutOfflineProcess.setVisibility(View.GONE);
-                                            recyclerView.setOnTouchListener((view, event) -> false); // true to disable touch events
-                                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                                                recyclerView.setRenderEffect(null);
-                                                layoutSortFilter.setRenderEffect(null);
-                                            }
+                                            enableButtons();
                                             refreshData();
                                         }
                                     });
                                 }
-                            } catch (IOException | NoSuchAlgorithmException e) {
+                            } catch (IOException | NoSuchAlgorithmException | JSONException e) {
                                 new Handler(Looper.getMainLooper()).post(() -> {
                                     if (getActivity() instanceof MainActivity) {
                                         ((MainActivity) getActivity()).setBottomNavigationEnabled(true);
@@ -466,44 +486,11 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
 
                                     if (remainingUrls.decrementAndGet() == 0) {
                                         // Enable after OfflineScan is completed
-                                        btnScanOffline.setEnabled(true);
-                                        btnRemoveItem.setEnabled(true);
-                                        spin_Date.setEnabled(true);
-                                        spin_Result.setEnabled(true);
-                                        layoutProcessText.setVisibility(View.GONE); // yung umiikot
-                                        layoutOfflineProcess.setVisibility(View.GONE);
-                                        recyclerView.setOnTouchListener((view, event) -> false); // true to disable touch events
-                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                                            recyclerView.setRenderEffect(null);
-                                            layoutSortFilter.setRenderEffect(null);
-                                        }
+                                        enableButtons();
                                         refreshData();
                                     }
                                 });
                                 Log.e("SmsListener", "Error: " + e.getMessage());
-                            } catch (JSONException e) {
-                                new Handler(Looper.getMainLooper()).post(() -> {
-                                    if (getActivity() instanceof MainActivity) {
-                                        ((MainActivity) getActivity()).setBottomNavigationEnabled(true);
-                                    }
-
-                                    if (remainingUrls.decrementAndGet() == 0) {
-                                        // Enable after OfflineScan is completed
-                                        btnScanOffline.setEnabled(true);
-                                        btnRemoveItem.setEnabled(true);
-                                        spin_Date.setEnabled(true);
-                                        spin_Result.setEnabled(true);
-                                        layoutProcessText.setVisibility(View.GONE); // yung umiikot
-                                        layoutOfflineProcess.setVisibility(View.GONE);
-                                        recyclerView.setOnTouchListener((view, event) -> false); // true to disable touch events
-                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                                            recyclerView.setRenderEffect(null);
-                                            layoutSortFilter.setRenderEffect(null);
-                                        }
-                                        refreshData();
-                                    }
-                                });
-                                throw new RuntimeException(e);
                             } finally {
                                 executorService.shutdown();
                             }
@@ -513,39 +500,11 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
             }
             cursor.close();
         } else {
-            new Handler(Looper.getMainLooper()).post(() -> {
-                if (getActivity() instanceof MainActivity) {
-                    ((MainActivity) getActivity()).setBottomNavigationEnabled(true);
-                }
-                // Enable after OfflineScan is completed
-                btnScanOffline.setEnabled(true);
-                btnRemoveItem.setEnabled(true);
-                spin_Date.setEnabled(true);
-                spin_Result.setEnabled(true);
-                layoutProcessText.setVisibility(View.GONE); // yung umiikot
-                layoutOfflineProcess.setVisibility(View.GONE);
-                recyclerView.setOnTouchListener((view, event) -> false); // true to disable touch events
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    recyclerView.setRenderEffect(null);
-                    layoutSortFilter.setRenderEffect(null);
-                }
-                refreshData(); // Call refreshData when all URLs are processed
-            });
-            Log.e("Error", "Cursor is null or empty");
+            enableButtons();
         }
     }
 
-
     private void refreshData() {
-//        FragmentManager fragmentManager = getActivity().getSupportFragmentManager();
-//        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-//
-//        MessageFragment messageFragment = new MessageFragment(); // or MessageFragment.newInstance() if you have arguments
-//
-//        fragmentTransaction.replace(R.id.frame_layout, messageFragment);
-//        // fragmentTransaction.addToBackStack(null); // Optional: add the transaction to the back stack so the user can navigate back
-//        fragmentTransaction.commit();
-
         // Check Offline Detected URL
         int count = DB.getOfflineDataCount();
         txtDetectedURL.setText("When Offline LinkGuard Detected "+ count + " URL");
@@ -604,5 +563,206 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
 
         return false;
     }
+
+    public String SnapshotmachineAPI(String url) throws UnsupportedEncodingException, NoSuchAlgorithmException {
+        // Call ScreenshotMachine API
+        String customerKey = ss_API_KEY;
+        String secretPhrase = ""; // leave secret phrase empty if not needed
+        ScreenshoMachine sm = new ScreenshoMachine(customerKey, secretPhrase);
+        Map<String, String> options = new HashMap<>();
+        options.put("url", url);
+        options.put("dimension", "1366x768");
+        options.put("device", "desktop");
+        options.put("format", "png");
+        options.put("cacheLimit", "0");
+        options.put("delay", "3000"); // 3 seconds
+        options.put("zoom", "100");
+
+        String apiUrl = sm.generateScreenshotApiUrl(options);
+        Log.v("Screenshot API URL", apiUrl);
+
+        return apiUrl;
+    }
+    public byte[] getBitmapAsByteArray(Bitmap bitmap) {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.PNG, 0, outputStream);
+        return outputStream.toByteArray();
+    }
+
+    public String NotifyResult(Context context, String url, String JSON){
+        NotificationManager notificationManager = (NotificationManager)  context.getSystemService(Context.NOTIFICATION_SERVICE);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(
+                    CHANNEL_ID,
+                    "SMS Channel",
+                    NotificationManager.IMPORTANCE_DEFAULT);
+            notificationManager.createNotificationChannel(channel);
+        }
+
+        // Create an Intent to open your main Activity when the notification is clicked
+        Intent intent = new Intent(context, MainActivity.class); // Replace with your main activity
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP); // Ensure app is brought to foreground
+
+        // Wrap the Intent in a PendingIntent with FLAG_IMMUTABLE
+        PendingIntent pendingIntent = PendingIntent.getActivity(
+                context,
+                0, // requestCode
+                intent,
+                PendingIntent.FLAG_IMMUTABLE // Required for Android 12+
+        );
+
+        String setTitle;
+        String result;
+        try {
+            JSONObject jsonObject = new JSONObject(JSON);
+
+            int malicious = jsonObject.getJSONObject("data").getJSONObject("attributes").getJSONObject("stats").getInt( "malicious");
+            int suspicious = jsonObject.getJSONObject("data").getJSONObject("attributes").getJSONObject("stats").getInt("suspicious");
+            int harmless = jsonObject.getJSONObject("data").getJSONObject("attributes").getJSONObject("stats").getInt("harmless");
+
+            if(malicious > 0 && suspicious > 0){ // 3 if malicious and suspicious
+                setTitle = "Link is Malicious and Suspicious";
+                result = "3";
+            }
+            else if(malicious > 0){ // 1 if malicious
+                setTitle = "Link is Malicious";
+                result = "1";
+            }
+            else if(suspicious > 0){ // 2 if suspicious
+                setTitle = "Link is Suspicious";
+                result = "2";
+            }
+            else { // 0 if harmless
+                setTitle = "Link is Harmless";
+                result = "0";
+
+            }
+
+            // Notification 1
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
+                    .setSmallIcon(R.drawable.ic_notification)
+                    .setContentTitle(setTitle)
+                    .setContentText("URL: " + url)
+                    .setPriority(NotificationCompat.PRIORITY_HIGH)
+                    .setAutoCancel(true) // Dismiss the notification when clicked
+                    .setContentIntent(pendingIntent); // Set the intent that will fire when the user taps the notification
+
+            notificationManager.notify(100, builder.build());
+            return result;
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public String getAnalysis(String analysisId) throws IOException {
+        if (analysisId == null || analysisId.isEmpty()) {
+            Log.e("SmsListener", "No Analysis ID provided.");
+            return null;
+        }
+
+        OkHttpClient client = new OkHttpClient.Builder()
+                .connectTimeout(60, TimeUnit.SECONDS)
+                .readTimeout(60, TimeUnit.SECONDS)
+                .writeTimeout(60, TimeUnit.SECONDS)
+                .build();
+
+        Request request = new Request.Builder()
+                .url("https://www.virustotal.com/api/v3/analyses/" + analysisId)
+                .get()
+                .addHeader("accept", "application/json")
+                .addHeader("x-apikey", API_KEY)
+                .build();
+
+        while (true) {
+            try (Response response = client.newCall(request).execute()) {
+                if (!response.isSuccessful()) {
+                    throw new IOException("Unexpected code " + response);
+                }
+
+                String responseBody = response.body().string();
+                Log.d("SmsListener", "getAnalysis Response: " + responseBody);
+                System.out.println("Get Analysis Response received: " + responseBody);
+
+                JSONObject jsonResponse = new JSONObject(responseBody);
+                JSONObject attributes = jsonResponse.getJSONObject("data").getJSONObject("attributes");
+
+                if (!attributes.getString("status").equals("queued")) {
+                    Log.d("SmsListener", "Analysis Results: " + jsonResponse.toString(2));
+                    return jsonResponse.toString();
+                } else {
+                    Log.d("SmsListener", "Analysis still queued.");
+                    Thread.sleep(1000);
+                }
+
+            } catch (IOException | JSONException | InterruptedException e) {
+                Log.e("SmsListener", "Error in getAnalysis: " + e.getMessage());
+                e.printStackTrace();
+                break;
+            }
+        }
+        return null;
+    }
+
+    int retryCountNew = 5;
+    public String processUrls(Context context, String url) throws IOException, JSONException {
+        // POST request https://docs.virustotal.com/reference/scan-url
+
+        // Get the pinned OkHttpClient
+        OkHttpClient client = NetworkClient.getPinnedHttpClient();
+
+        String encodedUrl = URLEncoder.encode(url, "UTF-8");
+        MediaType mediaType = MediaType.parse("application/x-www-form-urlencoded");
+        RequestBody body = RequestBody.create(mediaType, "url=" + encodedUrl);
+
+        for (int i = 0; i < retryCountNew; i++) {
+            try {
+                Request request = new Request.Builder()
+                        .url("https://www.virustotal.com/api/v3/urls")
+                        .post(body)
+                        .addHeader("accept", "application/json")
+                        .addHeader("x-apikey", API_KEY)
+                        .addHeader("content-type", "application/x-www-form-urlencoded")
+                        .build();
+
+                try (Response response = client.newCall(request).execute()) {
+                    if (!response.isSuccessful()) {
+                        throw new IOException("Unexpected code " + response);
+                    }
+
+                    String responseBody = response.body().string();
+                    JSONObject jsonResponse = new JSONObject(responseBody);
+                    return jsonResponse.getJSONObject("data").getString("id");
+                }
+            } catch (IOException | JSONException e) {
+                Log.e("TestListener", "Attempt " + (i + 1) + " failed", e);
+                if (i == retryCountNew - 1) {
+                    invalidURL(context, url);
+                    throw e;  // Final attempt failed, exception
+                }
+            }
+        }
+        return null;
+    }
+    private void invalidURL(Context context, String url) {
+        NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+
+        // Create NotificationChannel for Android Oreo and higher
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, "SMS Channel", NotificationManager.IMPORTANCE_DEFAULT);
+            notificationManager.createNotificationChannel(channel);
+        }
+
+        // Build the notification
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_notification)
+                .setContentTitle("Error in Scanning URL")
+                .setContentText("URL: " + url)
+                .setPriority(NotificationCompat.PRIORITY_HIGH);
+
+        // Show the notification
+        notificationManager.notify(6, builder.build());
+    }
+
 
 }

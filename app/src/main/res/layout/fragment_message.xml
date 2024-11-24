@@ -40,6 +40,16 @@
                     android:text="When Offline LinkGuard Detected URL:"
                     android:textColor="@color/Unselected"
                     android:textSize="16sp" />
+<!--                <TextView-->
+<!--                    android:id="@+id/txtRefreshText"-->
+<!--                    android:layout_width="match_parent"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:visibility="gone"-->
+<!--                    android:fontFamily="@font/poppins_semibold"-->
+<!--                    android:gravity="center"-->
+<!--                    android:text="Process Completed\nSwipe down to refresh the page. . ."-->
+<!--                    android:textColor="@color/Unselected"-->
+<!--                    android:textSize="16sp" />-->
 
                 <LinearLayout
                     android:id="@+id/layoutSpinnerButton"
@@ -95,18 +105,6 @@
                     android:orientation="vertical"
                     android:gravity="center">
 
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:fontFamily="@font/poppins_regular"
-                        android:paddingTop="15dp"
-                        android:paddingHorizontal="15dp"
-                        android:text="During the process navigation and buttons are disabled"
-                        android:textAlignment="center"
-                        android:textColor="@color/Unselected"
-                        android:textSize="14sp">
-
-                    </TextView>
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -115,16 +113,17 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="match_parent"
-                            android:layout_marginRight="10dp"
+                            android:layout_marginVertical="20dp"
                             android:fontFamily="@font/poppins_regular"
                             android:gravity="center"
-                            android:text="LinkGuard is processing the data"
+                            android:text="Please wait while LinkGuard is\nprocessing the data"
                             android:textColor="@color/Unselected"
                             android:textSize="18sp" />
 
                         <ProgressBar
                             android:layout_width="wrap_content"
-                            android:layout_height="match_parent" />
+                            android:layout_height="match_parent"
+                            android:layout_marginVertical="20dp"/>
                     </LinearLayout>
 
                 </LinearLayout>
