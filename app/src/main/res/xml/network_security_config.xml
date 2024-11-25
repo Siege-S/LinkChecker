@@ -3,9 +3,9 @@
     <domain-config cleartextTrafficPermitted="false">
         <domain includeSubdomains="true">wwww.virustotal.com</domain>
         <pin-set>
-            <!-- Pin for the SSL/TLS certificate of example.com -->
+            <!-- Pin for the SSL/TLS certificate of virustotal.com -->
             <pin digest="SHA-256">SKnAhvm/+K6bsYuN0NqL/1j+fdMMICY8JVm0PyYJ5TA=</pin>
-            <!-- Backup Pin for the SSL/TLS certificate of example.com -->
+            <!-- Backup Pin for the SSL/TLS certificate of virustotal.com -->
             <pin digest="SHA-256">Wec45nQiFwKvHtuHxSAMGkt19k+uPSw9JlEkxhvYPHk=</pin>
             <pin digest="SHA-256">Wec45nQiFwKvHtuHxSAMGkt19k+uPSw9JlEkxhvYPHk=</pin>
         </pin-set>

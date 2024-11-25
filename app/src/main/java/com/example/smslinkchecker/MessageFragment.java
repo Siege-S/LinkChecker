@@ -420,13 +420,14 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
         }
     }
     private void processOfflineData(Context context) {
+        SmsForeground smsForeground = new SmsForeground();
         DBHelper dbHelper = new DBHelper(context);
         Cursor cursor = dbHelper.getOfflineData();
         disableButtons();
         if (cursor != null) {
             int totalUrls = cursor.getCount();  // Total number of URLs to process
             final AtomicInteger remainingUrls = new AtomicInteger(totalUrls);
-
+            int notificationID = 300;
             if (cursor.moveToFirst()) {
                 int urlIndex = cursor.getColumnIndex("url");
                 int senderIndex = cursor.getColumnIndex("sender");
@@ -437,8 +438,9 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
                         String url = cursor.getString(urlIndex);
                         String sender = cursor.getString(senderIndex);
                         int id = cursor.getInt(idIndex);
-
+                        notificationID = notificationID + id;
                         ExecutorService executorService = Executors.newSingleThreadExecutor();
+                        int finalNotificationID = notificationID;
                         executorService.execute(() -> {
                             try {
                                 String apiUrl = SnapshotmachineAPI(url);
@@ -453,9 +455,17 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
                                         byte[] image = getBitmapAsByteArray(bitmap);
 
                                         new Handler(Looper.getMainLooper()).post(() -> {
-                                            String analysis = NotifyResult(context, url, analysisResultJSON);
-                                            dbHelper.insertData(url, sender, apiUrl, analysis, image, analysisResultJSON);
+                                            System.out.println("finalnotificationID: " + finalNotificationID);
+                                            String analysis = smsForeground.NotifyResult(context, url, sender, analysisResultJSON, finalNotificationID);
                                             dbHelper.deleteRecordById(id);
+
+                                            if(dbHelper.duplicateURL(url, sender)){
+                                                System.out.println("Message Fragment: Duplicate Entry - (" + sender + " : " + url + ") Updating Data. . .");
+                                                dbHelper.updateData(url, sender, apiUrl, analysis, image, analysisResultJSON);
+                                            } else {
+                                                System.out.println("Message Fragment: New Entry - (" + sender + " : " + url + ") Inserting Data. . .");
+                                                dbHelper.insertData(url, sender, apiUrl, analysis, image, analysisResultJSON);
+                                            }
 
                                             // Decrement the remaining URLs count
                                             if (remainingUrls.decrementAndGet() == 0) {
@@ -587,72 +597,6 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         bitmap.compress(Bitmap.CompressFormat.PNG, 0, outputStream);
         return outputStream.toByteArray();
-    }
-
-    public String NotifyResult(Context context, String url, String JSON){
-        NotificationManager notificationManager = (NotificationManager)  context.getSystemService(Context.NOTIFICATION_SERVICE);
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel channel = new NotificationChannel(
-                    CHANNEL_ID,
-                    "SMS Channel",
-                    NotificationManager.IMPORTANCE_DEFAULT);
-            notificationManager.createNotificationChannel(channel);
-        }
-
-        // Create an Intent to open your main Activity when the notification is clicked
-        Intent intent = new Intent(context, MainActivity.class); // Replace with your main activity
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP); // Ensure app is brought to foreground
-
-        // Wrap the Intent in a PendingIntent with FLAG_IMMUTABLE
-        PendingIntent pendingIntent = PendingIntent.getActivity(
-                context,
-                0, // requestCode
-                intent,
-                PendingIntent.FLAG_IMMUTABLE // Required for Android 12+
-        );
-
-        String setTitle;
-        String result;
-        try {
-            JSONObject jsonObject = new JSONObject(JSON);
-
-            int malicious = jsonObject.getJSONObject("data").getJSONObject("attributes").getJSONObject("stats").getInt( "malicious");
-            int suspicious = jsonObject.getJSONObject("data").getJSONObject("attributes").getJSONObject("stats").getInt("suspicious");
-            int harmless = jsonObject.getJSONObject("data").getJSONObject("attributes").getJSONObject("stats").getInt("harmless");
-
-            if(malicious > 0 && suspicious > 0){ // 3 if malicious and suspicious
-                setTitle = "Link is Malicious and Suspicious";
-                result = "3";
-            }
-            else if(malicious > 0){ // 1 if malicious
-                setTitle = "Link is Malicious";
-                result = "1";
-            }
-            else if(suspicious > 0){ // 2 if suspicious
-                setTitle = "Link is Suspicious";
-                result = "2";
-            }
-            else { // 0 if harmless
-                setTitle = "Link is Harmless";
-                result = "0";
-
-            }
-
-            // Notification 1
-            NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
-                    .setSmallIcon(R.drawable.ic_notification)
-                    .setContentTitle(setTitle)
-                    .setContentText("URL: " + url)
-                    .setPriority(NotificationCompat.PRIORITY_HIGH)
-                    .setAutoCancel(true) // Dismiss the notification when clicked
-                    .setContentIntent(pendingIntent); // Set the intent that will fire when the user taps the notification
-
-            notificationManager.notify(100, builder.build());
-            return result;
-        } catch (JSONException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     public String getAnalysis(String analysisId) throws IOException {
