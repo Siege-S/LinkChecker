@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">LinkGuard</string>
-    <string name="ver">Ver.17.4 </string>
+    <string name="ver">Ver.17.5</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="Intro_Linkguard">LinkGuard is an Android app that detects SMS messages with links, captures a snapshot of the link, and swiftly analyzes it for potential smishing threats and malicious activity, ensuring your protection</string>

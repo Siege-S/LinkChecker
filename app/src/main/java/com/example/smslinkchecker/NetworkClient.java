@@ -30,7 +30,7 @@ public class NetworkClient {
 
         // Build OkHttpClient with CertificatePinner and additional configurations
         return new OkHttpClient.Builder()
-                .connectTimeout(30, TimeUnit.SECONDS)  // Set connection timeout
+                .connectTimeout(10, TimeUnit.SECONDS)  // Set connection timeout
                 .readTimeout(30, TimeUnit.SECONDS)     // Set read timeout
                 .writeTimeout(30, TimeUnit.SECONDS)    // Set write timeout
                 .retryOnConnectionFailure(true)        // Enable retry on connection failure

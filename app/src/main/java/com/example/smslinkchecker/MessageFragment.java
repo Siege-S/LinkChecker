@@ -21,6 +21,8 @@ import android.graphics.BitmapFactory;
 import android.graphics.RenderEffect;
 import android.graphics.Shader;
 import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
 import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
@@ -471,6 +473,18 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
                                             enableButtons();
                                             refreshData(); // Call refreshData when all URLs are processed
                                         });
+                                    } else {
+                                        // Failure case
+                                        new Handler(Looper.getMainLooper()).post(() -> {
+                                            if (getActivity() instanceof MainActivity) {
+                                                ((MainActivity) getActivity()).setBottomNavigationEnabled(true);
+                                            }
+
+                                            // Enable after OfflineScan failed
+                                            enableButtons();
+                                            refreshData();
+                                            invalidURL(context, url);
+                                        });
                                     }
                                 } else {
                                     // Failure case
@@ -601,11 +615,7 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
             return null;
         }
 
-        OkHttpClient client = new OkHttpClient.Builder()
-                .connectTimeout(60, TimeUnit.SECONDS)
-                .readTimeout(60, TimeUnit.SECONDS)
-                .writeTimeout(60, TimeUnit.SECONDS)
-                .build();
+        OkHttpClient client = NetworkClient.getPinnedHttpClient();
 
         Request request = new Request.Builder()
                 .url("https://www.virustotal.com/api/v3/analyses/" + analysisId)
@@ -644,7 +654,7 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
         return null;
     }
 
-    int retryCountNew = 5;
+//    int retryCountNew = 5;
     public String processUrls(Context context, String url) throws IOException, JSONException {
         // POST request https://docs.virustotal.com/reference/scan-url
 
@@ -655,7 +665,7 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
         MediaType mediaType = MediaType.parse("application/x-www-form-urlencoded");
         RequestBody body = RequestBody.create(mediaType, "url=" + encodedUrl);
 
-        for (int i = 0; i < retryCountNew; i++) {
+//        for (int i = 0; i < retryCountNew; i++) {
             try {
                 Request request = new Request.Builder()
                         .url("https://www.virustotal.com/api/v3/urls")
@@ -675,14 +685,11 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
                     return jsonResponse.getJSONObject("data").getString("id");
                 }
             } catch (IOException | JSONException e) {
-                Log.e("TestListener", "Attempt " + (i + 1) + " failed", e);
-                if (i == retryCountNew - 1) {
+//                Log.e("TestListener", "Attempt " + (i + 1) + " failed", e);
+//                if (i == retryCountNew - 1) {
                     invalidURL(context, url);
                     throw e;  // Final attempt failed, exception
-                }
             }
-        }
-        return null;
     }
     private void invalidURL(Context context, String url) {
         NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);

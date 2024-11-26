@@ -85,10 +85,11 @@ public class SmsListener extends BroadcastReceiver {
                         System.out.println("url found in msg: " + messageBody);
                         System.out.println("Start Foreground Service. . .");
                         ContextCompat.startForegroundService(context, serviceIntent);
+                    } else {
+                        System.out.println("No url found in msg: " + messageBody);
                     }
-                    System.out.println("No url found in msg: " + messageBody);
-                }
 
+                }
             }
 
         }
