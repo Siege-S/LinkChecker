@@ -280,8 +280,12 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
             @Override
             public void onClick(View v) {
                 Context context = getContext();
+                //                    processOfflineData(context);
                 if(isInternetConnected(context)){
-                    processOfflineData(context);
+                    String processURL = spin_url.getSelectedItem().toString();
+                    System.out.println("Message Fragment: Scan this URL: " + processURL);
+                    processOfflineData(context, processURL);
+
                 } else {
                     Toast.makeText(context, "No Internet Connection", Toast.LENGTH_SHORT).show();
                 }
@@ -419,14 +423,12 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
             ((MainActivity) getActivity()).setBottomNavigationEnabled(true);
         }
     }
-    private void processOfflineData(Context context) {
+    private void processOfflineData(Context context, String ArgUrl) {
         SmsForeground smsForeground = new SmsForeground();
         DBHelper dbHelper = new DBHelper(context);
-        Cursor cursor = dbHelper.getOfflineData();
+        Cursor cursor = dbHelper.getRecordByURL(ArgUrl);
         disableButtons();
         if (cursor != null) {
-            int totalUrls = cursor.getCount();  // Total number of URLs to process
-            final AtomicInteger remainingUrls = new AtomicInteger(totalUrls);
             int notificationID = 300;
             if (cursor.moveToFirst()) {
                 int urlIndex = cursor.getColumnIndex("url");
@@ -466,12 +468,8 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
                                                 System.out.println("Message Fragment: New Entry - (" + sender + " : " + url + ") Inserting Data. . .");
                                                 dbHelper.insertData(url, sender, apiUrl, analysis, image, analysisResultJSON);
                                             }
-
-                                            // Decrement the remaining URLs count
-                                            if (remainingUrls.decrementAndGet() == 0) {
-                                                enableButtons();
-                                                refreshData(); // Call refreshData when all URLs are processed
-                                            }
+                                            enableButtons();
+                                            refreshData(); // Call refreshData when all URLs are processed
                                         });
                                     }
                                 } else {
@@ -481,11 +479,10 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
                                             ((MainActivity) getActivity()).setBottomNavigationEnabled(true);
                                         }
 
-                                        if (remainingUrls.decrementAndGet() == 0) {
-                                            // Enable after OfflineScan is completed
-                                            enableButtons();
-                                            refreshData();
-                                        }
+                                        // Enable after OfflineScan failed
+                                        enableButtons();
+                                        refreshData();
+                                        invalidURL(context, url);
                                     });
                                 }
                             } catch (IOException | NoSuchAlgorithmException | JSONException e) {
@@ -493,12 +490,10 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
                                     if (getActivity() instanceof MainActivity) {
                                         ((MainActivity) getActivity()).setBottomNavigationEnabled(true);
                                     }
-
-                                    if (remainingUrls.decrementAndGet() == 0) {
-                                        // Enable after OfflineScan is completed
-                                        enableButtons();
-                                        refreshData();
-                                    }
+                                    // Enable after OfflineScan failed
+                                    invalidURL(context, url);
+                                    enableButtons();
+                                    refreshData();
                                 });
                                 Log.e("SmsListener", "Error: " + e.getMessage());
                             } finally {
@@ -511,6 +506,7 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
             cursor.close();
         } else {
             enableButtons();
+            refreshData();
         }
     }
 
