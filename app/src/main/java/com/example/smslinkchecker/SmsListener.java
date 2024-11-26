@@ -80,8 +80,13 @@ public class SmsListener extends BroadcastReceiver {
                     Intent serviceIntent = new Intent(context, SmsForeground.class);
                     serviceIntent.putExtra("sender", sender);
                     serviceIntent.putStringArrayListExtra("urls", (ArrayList<String>) urls);
-
-                    ContextCompat.startForegroundService(context, serviceIntent);
+                    System.out.println("smslistener" + urls);
+                    if(!urls.isEmpty()){
+                        System.out.println("url found in msg: " + messageBody);
+                        System.out.println("Start Foreground Service. . .");
+                        ContextCompat.startForegroundService(context, serviceIntent);
+                    }
+                    System.out.println("No url found in msg: " + messageBody);
                 }
 
             }

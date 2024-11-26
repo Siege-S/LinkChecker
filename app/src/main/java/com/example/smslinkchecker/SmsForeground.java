@@ -130,6 +130,7 @@ public class SmsForeground extends Service { // Android Documentation: https://d
                             }
 
                             String responseBody = postResponse.body().string();
+                            System.out.println("postResponseBody: " + responseBody);
                             jsonResponse = new JSONObject(responseBody);
                             analysisId = jsonResponse.getJSONObject("data").getString("id");
                         }
