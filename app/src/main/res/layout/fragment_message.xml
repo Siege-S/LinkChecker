@@ -78,7 +78,7 @@
                         android:layout_weight="1"
                         android:background="@drawable/custom_button1"
                         android:fontFamily="@font/poppins_semibold"
-                        android:text="Scan All"
+                        android:text="Scan URL"
                         android:textAllCaps="false"
                         android:textColor="@color/light_gray"
                         android:textSize="12sp" />

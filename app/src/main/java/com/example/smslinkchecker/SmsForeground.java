@@ -44,7 +44,6 @@ public class SmsForeground extends Service { // Android Documentation: https://d
     public static final String API_KEY = BuildConfig.VT_API_KEY;
     public static final String ss_API_KEY = BuildConfig.SS_API_KEY;
 
-    //Adapted From: https://www.youtube.com/watch?v=2eT0QWJFJeY
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 
@@ -60,7 +59,6 @@ public class SmsForeground extends Service { // Android Documentation: https://d
             processUrlsWithInternet(this, urls, sender, new DBHelper(this));
         }
 
-        // Retrieve
 
         return START_STICKY; // Service will restart if killed by the system
     }
@@ -131,6 +129,7 @@ public class SmsForeground extends Service { // Android Documentation: https://d
                             }
 
                             String responseBody = postResponse.body().string();
+                            System.out.println("postResponseBody: " + responseBody);
                             jsonResponse = new JSONObject(responseBody);
                             analysisId = jsonResponse.getJSONObject("data").getString("id");
                         }
@@ -161,11 +160,11 @@ public class SmsForeground extends Service { // Android Documentation: https://d
                                 if (!attributes.getString("status").equals("queued")) {
                                     break;
                                 }
-                                Thread.sleep(2000); // Sleep to avoid overwhelming the API
+                                Thread.sleep(2000); // 2 second delay
                             }
                         }
 
-                        // If needed, process the results, e.g., screenshot
+                        // Screenshot API
                         String apiUrl = SnapshotmachineAPI(url);
                         Bitmap bitmap = BitmapFactory.decodeStream(new URL(apiUrl).openStream());
                         byte[] image = getBitmapAsByteArray(bitmap);
@@ -174,7 +173,7 @@ public class SmsForeground extends Service { // Android Documentation: https://d
                         JSONObject finalJsonResponse = jsonResponse;
                         String analysisResultJSON = jsonResponse.toString();
                         new Handler(Looper.getMainLooper()).post(() -> {
-                            String analysis = NotifyResult(context, url, String.valueOf(finalJsonResponse), notificationID);
+                            String analysis = NotifyResult(context, url, msgFrom, String.valueOf(finalJsonResponse), notificationID);
 
                             if(dbHelper.duplicateURL(url, msgFrom)){
                                 System.out.println("SmsForeground: Duplicate Entry - (" + msgFrom + " : " + url + ") Updating Data. . .");
@@ -203,14 +202,12 @@ public class SmsForeground extends Service { // Android Documentation: https://d
             }
         } finally {
             // Stop service only after all tasks are completed
-            stopForeground(true);  // Stop the foreground service
-            stopSelf();  // Stop the service entirely
             executorService.shutdown();
         }
     }
 
 
-    public String NotifyResult(Context context, String url, String JSON, int notificationID){
+    public String NotifyResult(Context context, String url, String sender, String JSON, int notificationID){
         NotificationManager notificationManager = (NotificationManager)  context.getSystemService(Context.NOTIFICATION_SERVICE);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -221,19 +218,35 @@ public class SmsForeground extends Service { // Android Documentation: https://d
             notificationManager.createNotificationChannel(channel);
         }
 
-        // Create an Intent to open your main Activity when the notification is clicked
-        Intent intent = new Intent(context, MainActivity.class); // Replace with your main activity
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP); // Ensure app is brought to foreground
+        // Open Main Activity
+        Intent appIntent = new Intent(context, MainActivity.class);
+        appIntent.putExtra("dismiss", notificationID);
+        appIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
 
         // Wrap the Intent in a PendingIntent with FLAG_IMMUTABLE
-        PendingIntent pendingIntent = PendingIntent.getActivity(
+        PendingIntent appPendingIntent = PendingIntent.getActivity(
                 context,
-                0, // requestCode
-                intent,
-                PendingIntent.FLAG_IMMUTABLE // Required for Android 12+
+                5, // requestCode
+                appIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ? PendingIntent.FLAG_IMMUTABLE : 0)
+        );
+
+        // Report as Spam or Delete SMS Action
+        Intent reportIntent = new Intent(context, MainActivity.class);
+        reportIntent.putExtra("sender", sender);
+        reportIntent.putExtra("notificationID", notificationID);
+        reportIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+
+        // Create a PendingIntent for the Activity
+        PendingIntent reportPendingIntent = PendingIntent.getActivity(
+                context,
+                4, // Unique request code
+                reportIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ? PendingIntent.FLAG_IMMUTABLE : 0)
         );
 
         String setTitle;
+        String setContent;
         String result;
         try {
             JSONObject jsonObject = new JSONObject(JSON);
@@ -244,31 +257,39 @@ public class SmsForeground extends Service { // Android Documentation: https://d
 
             if(malicious > 0 && suspicious > 0){ // 3 if malicious and suspicious
                 setTitle = "Link is Malicious and Suspicious";
+                setContent = "URL: '" + url + "' Consider reporting this as Spam or Deleting this SMS";
                 result = "3";
             }
             else if(malicious > 0){ // 1 if malicious
                 setTitle = "Link is Malicious";
+                setContent = "URL: '" + url + "' Consider reporting this as Spam or Deleting this SMS";
                 result = "1";
             }
             else if(suspicious > 0){ // 2 if suspicious
                 setTitle = "Link is Suspicious";
+                setContent = "URL: '" + url + "'";
                 result = "2";
             }
             else { // 0 if harmless
                 setTitle = "Link is Harmless";
+                setContent = "URL: '" + url + "'";
                 result = "0";
-
             }
 
             // Notification 1
             NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
                     .setSmallIcon(R.drawable.ic_notification)
                     .setContentTitle(setTitle)
-                    .setContentText("URL: " + url)
-                    .setPriority(NotificationCompat.PRIORITY_HIGH)
-                    .setAutoCancel(true) // Dismiss the notification when clicked
-                    .setContentIntent(pendingIntent); // Set the intent that will fire when the user taps the notification
+                    .setContentText(setContent)
+                    .setPriority(NotificationCompat.PRIORITY_HIGH);
 
+            if(malicious > 0){
+                builder.addAction(R.drawable.report, "Report as Spam or Delete SMS", reportPendingIntent);
+                builder.addAction(R.drawable.next, "Check Results", appPendingIntent);
+            } else {
+                builder.addAction(R.drawable.next, "Check Results", appPendingIntent);
+                builder.addAction(R.drawable.report, "Report as Spam or Delete SMS", reportPendingIntent);
+            }
             System.out.println("Notify Result: " + url + " : " + notificationID);
             notificationManager.notify(notificationID, builder.build());
             return result;
@@ -357,6 +378,7 @@ public class SmsForeground extends Service { // Android Documentation: https://d
         Intent saveIntent = new Intent(context, SaveForLaterService.class); // Use IntentService for simplicity
         saveIntent.putExtra("url", url);
         saveIntent.putExtra("sender", sender);
+        saveIntent.putExtra("notificationID", notificationID);
         PendingIntent savePendingIntent = PendingIntent.getService(
                 context,
                 1, // Different request code

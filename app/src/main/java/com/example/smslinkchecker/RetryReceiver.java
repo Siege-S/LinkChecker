@@ -35,10 +35,6 @@ import okhttp3.Response;
 
 public class RetryReceiver extends BroadcastReceiver {
 
-    private static final String CHANNEL_ID = "1001";
-    public static final String API_KEY = BuildConfig.VT_API_KEY;
-    public static final String ss_API_KEY = BuildConfig.SS_API_KEY;
-    SmsForeground smsForeground = new SmsForeground();
     @Override
     public void onReceive(Context context, Intent intent) {
         String url = intent.getStringExtra("url");

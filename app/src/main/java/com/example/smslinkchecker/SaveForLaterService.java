@@ -18,6 +18,7 @@ public class SaveForLaterService extends IntentService {
     protected void onHandleIntent(@Nullable Intent intent) {
         String url = intent.getStringExtra("url");
         String sender = intent.getStringExtra("sender");
+        int notificationID = intent.getIntExtra("notificationID", 0);
 
         // Save to database
         DBHelper dbHelper = new DBHelper(this);
@@ -29,7 +30,7 @@ public class SaveForLaterService extends IntentService {
 
         // Dismiss the notification after saving
         NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        notificationManager.cancel(69); // Cancel the notification with ID 100
+        notificationManager.cancel(notificationID); // Cancel the notification with ID 100
 
     }
 }

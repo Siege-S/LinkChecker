@@ -58,7 +58,6 @@ public class SmsListener extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
 
-        // Adapted from (Source: https://www.youtube.com/watch?v=Q_5mnnj2Mfg)
         if(Telephony.Sms.Intents.SMS_RECEIVED_ACTION.equals(intent.getAction())){
 
             DBHelper dbHelper = new DBHelper(context);
@@ -80,10 +79,16 @@ public class SmsListener extends BroadcastReceiver {
                     Intent serviceIntent = new Intent(context, SmsForeground.class);
                     serviceIntent.putExtra("sender", sender);
                     serviceIntent.putStringArrayListExtra("urls", (ArrayList<String>) urls);
+                    System.out.println("smslistener" + urls);
+                    if(!urls.isEmpty()){
+                        System.out.println("url found in msg: " + messageBody);
+                        System.out.println("Start Foreground Service. . .");
+                        ContextCompat.startForegroundService(context, serviceIntent);
+                    } else {
+                        System.out.println("No url found in msg: " + messageBody);
+                    }
 
-                    ContextCompat.startForegroundService(context, serviceIntent);
                 }
-
             }
 
         }

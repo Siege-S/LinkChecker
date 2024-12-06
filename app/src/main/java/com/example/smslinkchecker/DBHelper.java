@@ -63,17 +63,22 @@ public class DBHelper extends SQLiteOpenHelper {
         db.close();
     }
 
+    public Cursor getRecordByURL(String url) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        return db.rawQuery("SELECT * FROM urlOfflineTbl WHERE url = ?", new String[]{url});
+    }
+
     public void deleteRecordById(int id) {
         SQLiteDatabase db = this.getWritableDatabase();
         db.delete("urlOfflineTbl", "id = ?", new String[]{String.valueOf(id)});
         db.close();
     }
 
-    public Cursor getOfflineData(){
-        SQLiteDatabase DB = this.getReadableDatabase();
-        Cursor cursor = DB.rawQuery("SELECT * FROM urlOfflineTbl ORDER BY timestamp DESC", null);
-        return cursor;
-    }
+//    public Cursor getOfflineData(){
+//        SQLiteDatabase DB = this.getReadableDatabase();
+//        Cursor cursor = DB.rawQuery("SELECT * FROM urlOfflineTbl ORDER BY timestamp DESC", null);
+//        return cursor;
+//    }
     public int getOfflineDataCount() {
         SQLiteDatabase DB = this.getReadableDatabase();
         Cursor cursor = DB.rawQuery("SELECT COUNT(*) FROM urlOfflineTbl", null);

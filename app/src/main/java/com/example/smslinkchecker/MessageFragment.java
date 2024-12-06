@@ -21,6 +21,8 @@ import android.graphics.BitmapFactory;
 import android.graphics.RenderEffect;
 import android.graphics.Shader;
 import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
 import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
@@ -280,8 +282,12 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
             @Override
             public void onClick(View v) {
                 Context context = getContext();
+                //                    processOfflineData(context);
                 if(isInternetConnected(context)){
-                    processOfflineData(context);
+                    String processURL = spin_url.getSelectedItem().toString();
+                    System.out.println("Message Fragment: Scan this URL: " + processURL);
+                    processOfflineData(context, processURL);
+
                 } else {
                     Toast.makeText(context, "No Internet Connection", Toast.LENGTH_SHORT).show();
                 }
@@ -419,14 +425,13 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
             ((MainActivity) getActivity()).setBottomNavigationEnabled(true);
         }
     }
-    private void processOfflineData(Context context) {
+    private void processOfflineData(Context context, String ArgUrl) {
+        SmsForeground smsForeground = new SmsForeground();
         DBHelper dbHelper = new DBHelper(context);
-        Cursor cursor = dbHelper.getOfflineData();
+        Cursor cursor = dbHelper.getRecordByURL(ArgUrl);
         disableButtons();
         if (cursor != null) {
-            int totalUrls = cursor.getCount();  // Total number of URLs to process
-            final AtomicInteger remainingUrls = new AtomicInteger(totalUrls);
-
+            int notificationID = 300;
             if (cursor.moveToFirst()) {
                 int urlIndex = cursor.getColumnIndex("url");
                 int senderIndex = cursor.getColumnIndex("sender");
@@ -437,8 +442,9 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
                         String url = cursor.getString(urlIndex);
                         String sender = cursor.getString(senderIndex);
                         int id = cursor.getInt(idIndex);
-
+                        notificationID = notificationID + id;
                         ExecutorService executorService = Executors.newSingleThreadExecutor();
+                        int finalNotificationID = notificationID;
                         executorService.execute(() -> {
                             try {
                                 String apiUrl = SnapshotmachineAPI(url);
@@ -453,7 +459,8 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
                                         byte[] image = getBitmapAsByteArray(bitmap);
 
                                         new Handler(Looper.getMainLooper()).post(() -> {
-                                            String analysis = NotifyResult(context, url, analysisResultJSON);
+                                            System.out.println("finalnotificationID: " + finalNotificationID);
+                                            String analysis = smsForeground.NotifyResult(context, url, sender, analysisResultJSON, finalNotificationID);
                                             dbHelper.deleteRecordById(id);
 
                                             if(dbHelper.duplicateURL(url, sender)){
@@ -463,12 +470,20 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
                                                 System.out.println("Message Fragment: New Entry - (" + sender + " : " + url + ") Inserting Data. . .");
                                                 dbHelper.insertData(url, sender, apiUrl, analysis, image, analysisResultJSON);
                                             }
-
-                                            // Decrement the remaining URLs count
-                                            if (remainingUrls.decrementAndGet() == 0) {
-                                                enableButtons();
-                                                refreshData(); // Call refreshData when all URLs are processed
+                                            enableButtons();
+                                            refreshData(); // Call refreshData when all URLs are processed
+                                        });
+                                    } else {
+                                        // Failure case
+                                        new Handler(Looper.getMainLooper()).post(() -> {
+                                            if (getActivity() instanceof MainActivity) {
+                                                ((MainActivity) getActivity()).setBottomNavigationEnabled(true);
                                             }
+
+                                            // Enable after OfflineScan failed
+                                            enableButtons();
+                                            refreshData();
+                                            invalidURL(context, url);
                                         });
                                     }
                                 } else {
@@ -478,11 +493,10 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
                                             ((MainActivity) getActivity()).setBottomNavigationEnabled(true);
                                         }
 
-                                        if (remainingUrls.decrementAndGet() == 0) {
-                                            // Enable after OfflineScan is completed
-                                            enableButtons();
-                                            refreshData();
-                                        }
+                                        // Enable after OfflineScan failed
+                                        enableButtons();
+                                        refreshData();
+                                        invalidURL(context, url);
                                     });
                                 }
                             } catch (IOException | NoSuchAlgorithmException | JSONException e) {
@@ -490,12 +504,10 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
                                     if (getActivity() instanceof MainActivity) {
                                         ((MainActivity) getActivity()).setBottomNavigationEnabled(true);
                                     }
-
-                                    if (remainingUrls.decrementAndGet() == 0) {
-                                        // Enable after OfflineScan is completed
-                                        enableButtons();
-                                        refreshData();
-                                    }
+                                    // Enable after OfflineScan failed
+                                    invalidURL(context, url);
+                                    enableButtons();
+                                    refreshData();
                                 });
                                 Log.e("SmsListener", "Error: " + e.getMessage());
                             } finally {
@@ -508,6 +520,7 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
             cursor.close();
         } else {
             enableButtons();
+            refreshData();
         }
     }
 
@@ -596,83 +609,13 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
         return outputStream.toByteArray();
     }
 
-    public String NotifyResult(Context context, String url, String JSON){
-        NotificationManager notificationManager = (NotificationManager)  context.getSystemService(Context.NOTIFICATION_SERVICE);
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel channel = new NotificationChannel(
-                    CHANNEL_ID,
-                    "SMS Channel",
-                    NotificationManager.IMPORTANCE_DEFAULT);
-            notificationManager.createNotificationChannel(channel);
-        }
-
-        // Create an Intent to open your main Activity when the notification is clicked
-        Intent intent = new Intent(context, MainActivity.class); // Replace with your main activity
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP); // Ensure app is brought to foreground
-
-        // Wrap the Intent in a PendingIntent with FLAG_IMMUTABLE
-        PendingIntent pendingIntent = PendingIntent.getActivity(
-                context,
-                0, // requestCode
-                intent,
-                PendingIntent.FLAG_IMMUTABLE // Required for Android 12+
-        );
-
-        String setTitle;
-        String result;
-        try {
-            JSONObject jsonObject = new JSONObject(JSON);
-
-            int malicious = jsonObject.getJSONObject("data").getJSONObject("attributes").getJSONObject("stats").getInt( "malicious");
-            int suspicious = jsonObject.getJSONObject("data").getJSONObject("attributes").getJSONObject("stats").getInt("suspicious");
-            int harmless = jsonObject.getJSONObject("data").getJSONObject("attributes").getJSONObject("stats").getInt("harmless");
-
-            if(malicious > 0 && suspicious > 0){ // 3 if malicious and suspicious
-                setTitle = "Link is Malicious and Suspicious";
-                result = "3";
-            }
-            else if(malicious > 0){ // 1 if malicious
-                setTitle = "Link is Malicious";
-                result = "1";
-            }
-            else if(suspicious > 0){ // 2 if suspicious
-                setTitle = "Link is Suspicious";
-                result = "2";
-            }
-            else { // 0 if harmless
-                setTitle = "Link is Harmless";
-                result = "0";
-
-            }
-
-            // Notification 1
-            NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
-                    .setSmallIcon(R.drawable.ic_notification)
-                    .setContentTitle(setTitle)
-                    .setContentText("URL: " + url)
-                    .setPriority(NotificationCompat.PRIORITY_HIGH)
-                    .setAutoCancel(true) // Dismiss the notification when clicked
-                    .setContentIntent(pendingIntent); // Set the intent that will fire when the user taps the notification
-
-            notificationManager.notify(100, builder.build());
-            return result;
-        } catch (JSONException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     public String getAnalysis(String analysisId) throws IOException {
         if (analysisId == null || analysisId.isEmpty()) {
             Log.e("SmsListener", "No Analysis ID provided.");
             return null;
         }
 
-        OkHttpClient client = new OkHttpClient.Builder()
-                .connectTimeout(60, TimeUnit.SECONDS)
-                .readTimeout(60, TimeUnit.SECONDS)
-                .writeTimeout(60, TimeUnit.SECONDS)
-                .build();
+        OkHttpClient client = NetworkClient.getPinnedHttpClient();
 
         Request request = new Request.Builder()
                 .url("https://www.virustotal.com/api/v3/analyses/" + analysisId)
@@ -711,7 +654,7 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
         return null;
     }
 
-    int retryCountNew = 5;
+//    int retryCountNew = 5;
     public String processUrls(Context context, String url) throws IOException, JSONException {
         // POST request https://docs.virustotal.com/reference/scan-url
 
@@ -722,7 +665,7 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
         MediaType mediaType = MediaType.parse("application/x-www-form-urlencoded");
         RequestBody body = RequestBody.create(mediaType, "url=" + encodedUrl);
 
-        for (int i = 0; i < retryCountNew; i++) {
+//        for (int i = 0; i < retryCountNew; i++) {
             try {
                 Request request = new Request.Builder()
                         .url("https://www.virustotal.com/api/v3/urls")
@@ -742,14 +685,11 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
                     return jsonResponse.getJSONObject("data").getString("id");
                 }
             } catch (IOException | JSONException e) {
-                Log.e("TestListener", "Attempt " + (i + 1) + " failed", e);
-                if (i == retryCountNew - 1) {
+//                Log.e("TestListener", "Attempt " + (i + 1) + " failed", e);
+//                if (i == retryCountNew - 1) {
                     invalidURL(context, url);
                     throw e;  // Final attempt failed, exception
-                }
             }
-        }
-        return null;
     }
     private void invalidURL(Context context, String url) {
         NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
