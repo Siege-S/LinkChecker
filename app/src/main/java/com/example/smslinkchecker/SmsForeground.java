@@ -44,7 +44,6 @@ public class SmsForeground extends Service { // Android Documentation: https://d
     public static final String API_KEY = BuildConfig.VT_API_KEY;
     public static final String ss_API_KEY = BuildConfig.SS_API_KEY;
 
-    //Adapted From: https://www.youtube.com/watch?v=2eT0QWJFJeY
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 

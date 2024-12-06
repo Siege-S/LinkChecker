@@ -56,9 +56,6 @@ public class MainActivity extends AppCompatActivity {
             else if (itemId == R.id.messages) {// Handle messages action
                 replaceFragment(new MessageFragment());
             }
-//            else if (itemId == R.id.contacts) {// Handle contacts action
-//                replaceFragment(new GuideFragment());
-//            }
             else if (itemId == R.id.settings) {// Handle settings action
                 replaceFragment(new SettingsFragment());
             }
@@ -267,16 +264,6 @@ public class MainActivity extends AppCompatActivity {
         finish();
     }
 
-//    @Override
-//    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-//        super.onActivityResult(requestCode, resultCode, data);
-//        if (requestCode == REQUEST_NOTIFICATION_PERMISSION) {
-//            // Check if notification permission is granted after returning from settings
-//            if (NotificationManagerCompat.from(this).areNotificationsEnabled()) {
-//                // Notification permission granted, proceed with your notification logic
-//            }
-//        }
-//    }
     public void setBottomNavigationEnabled(boolean enabled) {
         for (int i = 0; i < binding.bottomNavigationView.getMenu().size(); i++) {
             binding.bottomNavigationView.getMenu().getItem(i).setEnabled(enabled);

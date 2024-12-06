@@ -58,7 +58,6 @@ public class SmsListener extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
 
-        // Adapted from (Source: https://www.youtube.com/watch?v=Q_5mnnj2Mfg)
         if(Telephony.Sms.Intents.SMS_RECEIVED_ACTION.equals(intent.getAction())){
 
             DBHelper dbHelper = new DBHelper(context);
