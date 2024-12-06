@@ -1,1 +1,1 @@
-clone it to your local machine
+LinkGuard is an android mobile app that detects SMS messages with links, captures a snapshot of the link, and swiftly analyzes it for potential smishing threats and malicious activity, ensuring your protection
