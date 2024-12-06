@@ -2,17 +2,27 @@ package com.example.smslinkchecker;
 
 import static android.R.layout.simple_spinner_item;
 
+import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 
 import androidx.core.app.NotificationCompat;
+import androidx.core.content.ContextCompat;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.RenderEffect;
+import android.graphics.Shader;
 import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
 import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
@@ -30,6 +40,7 @@ import android.os.Looper;
 import android.text.Layout;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.SoundEffectConstants;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -40,21 +51,30 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.request.RequestOptions;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -63,6 +83,8 @@ import java.util.concurrent.Executors;
  */
 public class MessageFragment extends Fragment implements RecyclerViewInterface {
     private static final String CHANNEL_ID = "1001";
+    public static final String API_KEY = BuildConfig.VT_API_KEY;
+    public static final String ss_API_KEY = BuildConfig.SS_API_KEY;
     @Override
     public void onItemClick(int position) {
         FragmentManager fragmentManager = getActivity().getSupportFragmentManager();
@@ -73,9 +95,10 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
         String sender = Sender.get(position);
         String url = URL.get(position);
         String jsonResponse = JSONResponse.get(position);
+        String date = Date.get(position);
         byte[] imageBytes = imageURL.get(position);  // This is a byte array
 
-        DetailMessageFragment fragment = DetailMessageFragment.newInstance(id, sender, url, jsonResponse, imageBytes);
+        DetailMessageFragment_new fragment = DetailMessageFragment_new.newInstance(id, sender, url, jsonResponse, date, imageBytes);
         fragmentTransaction.replace(R.id.frame_layout, fragment);
         fragmentTransaction.addToBackStack(null);
         fragmentTransaction.commit();
@@ -103,13 +126,14 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
     Spinner spin_Result;
     View layoutSpinnerButton;
     View layoutOfflineProcess;
+    View layoutProcessText;
+    View layoutSortFilter;
     Button btnScanOffline;
     Button btnRemoveItem;
     Spinner spin_url;
     ImageView internet;
     TextView txtInternet;
     TextView txtDetectedURL;
-    TextView txtProcessText;
     public MessageFragment() {
         // Required empty public constructor
     }
@@ -167,16 +191,16 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
         adapter = new MyAdapter(getContext(), ID, Sender, URL,JSONResponse, imageURL, Date, Analysis, this);
         recyclerView.setAdapter(adapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-//      displayData();
 
         // Check internet connection
         internet = view.findViewById(R.id.IV_Internet);
         txtInternet = view.findViewById(R.id.txtInternet);
         layoutOfflineProcess = view.findViewById(R.id.layoutOfflineProcess);
+        layoutProcessText = view.findViewById(R.id.layoutProcessText);
         layoutSpinnerButton = view.findViewById(R.id.layoutSpinnerButton);
+        layoutSortFilter = view.findViewById(R.id.layoutSortFilter);
         txtDetectedURL = view.findViewById(R.id.txtDetectedURL);
-        txtProcessText = view.findViewById(R.id.txtProcessText);
-        txtProcessText.setVisibility(View.GONE);
+        layoutProcessText.setVisibility(View.GONE);
         int count = dbHelper.getOfflineDataCount();
         txtDetectedURL.setText("When Offline LinkGuard Detected "+ count + " URL");
         if(count == 0){
@@ -216,7 +240,6 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         // Set the adapter to the spinner
         spin_url.setAdapter(adapter);
-
         spin_url.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
@@ -231,7 +254,7 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
 
                         // Reload the Spinner data after deletion
                         List<String> updatedUrls = dbHelper.getOfflineUrls(); // Implement this to fetch URLs again
-                        ArrayAdapter<String> newAdapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item, updatedUrls);
+                        ArrayAdapter<String> newAdapter = new ArrayAdapter<>(getContext(), R.layout.spinner_item, updatedUrls);
                         newAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
                         int count = dbHelper.getOfflineDataCount();
                         txtDetectedURL.setText("When Offline LinkGuard Detected "+ count + " URL");
@@ -240,11 +263,11 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
                         } else {
                             layoutSpinnerButton.setVisibility(View.VISIBLE);
                         }
-
+                        refreshData();
                         // Set the updated adapter to the Spinner
                         spin_url.setAdapter(newAdapter);
 
-                        Toast.makeText(getContext(), selectedItem + " Deleted", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getContext(), selectedItem + " Removed", Toast.LENGTH_SHORT).show();
                     }
                 });
             }
@@ -259,11 +282,16 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
             @Override
             public void onClick(View v) {
                 Context context = getContext();
-                txtProcessText.setVisibility(View.VISIBLE);
-                processOfflineData(context);
-                btnScanOffline.setEnabled(false);
-                btnRemoveItem.setEnabled(false);
-                Toast.makeText(getContext(), "Please wait while LinkGuard is processing the data", Toast.LENGTH_LONG).show();
+                //                    processOfflineData(context);
+                if(isInternetConnected(context)){
+                    String processURL = spin_url.getSelectedItem().toString();
+                    System.out.println("Message Fragment: Scan this URL: " + processURL);
+                    processOfflineData(context, processURL);
+
+                } else {
+                    Toast.makeText(context, "No Internet Connection", Toast.LENGTH_SHORT).show();
+                }
+
             }
         }); // Offline Feature
 
@@ -322,7 +350,10 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
     }
 
     private void updateRecyclerView(Cursor cursor) {
+        if (getView() == null) return; // Check if the fragment's view is available
+
         TextView txtdata = getView().findViewById(R.id.txtdata);
+
         // Clear previous data to avoid duplication
         ID.clear();
         Sender.clear();
@@ -341,10 +372,10 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
                     ID.add(cursor.getString(0));           // Column 0: ID
                     Sender.add(cursor.getString(2));       // Column 2: Sender
                     URL.add(cursor.getString(1));          // Column 1: URL
-                    JSONResponse.add(cursor.getString(6)); // Column 7: JSONResponse
-                    imageURL.add(cursor.getBlob(5));       // Column 6: ImageURL
-                    Date.add(cursor.getString(7));         // Column 8: Timestamp
-                    Analysis.add(cursor.getString(4));     // Column 9: Analysis
+                    JSONResponse.add(cursor.getString(6)); // Column 6: JSONResponse
+                    imageURL.add(cursor.getBlob(5));       // Column 5: ImageURL
+                    Date.add(cursor.getString(7));         // Column 7: Timestamp
+                    Analysis.add(cursor.getString(4));     // Column 4: Analysis
 
                 } while (cursor.moveToNext());
             }
@@ -354,96 +385,146 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
         adapter.notifyDataSetChanged();
     }
 
+    private void disableButtons() {
+        // Disable while OfflineScanning is in progress
+        btnScanOffline.setEnabled(false);
+        btnRemoveItem.setEnabled(false);
+        btnScanOffline.setBackground(getResources().getDrawable(R.drawable.shape_stats));
+        btnRemoveItem.setBackground(getResources().getDrawable(R.drawable.shape_stats));
+        spin_Date.setEnabled(false);
+        spin_Result.setEnabled(false);
+        layoutProcessText.setVisibility(View.VISIBLE); // yung umiikot
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            recyclerView.setRenderEffect(RenderEffect.createBlurEffect(30, 30, Shader.TileMode.MIRROR));
+            layoutSortFilter.setRenderEffect(RenderEffect.createBlurEffect(10, 10, Shader.TileMode.MIRROR));
+        }
+        // true to disable touch events
+        recyclerView.setOnTouchListener((view, event) -> true);
+        Toast.makeText(getContext(), "Please wait while LinkGuard is processing the data", Toast.LENGTH_LONG).show();
 
-    private void processOfflineData(Context context) {
+        if (getActivity() instanceof MainActivity) {
+            ((MainActivity) getActivity()).setBottomNavigationEnabled(false);
+        }
+    }
+    private void enableButtons() {
+        // Disable while OfflineScanning is in progress
+        btnScanOffline.setEnabled(true);
+        btnRemoveItem.setEnabled(true);
+        btnScanOffline.setBackground(getResources().getDrawable(R.drawable.custom_button1));
+        btnRemoveItem.setBackground(getResources().getDrawable(R.drawable.custom_button2));
+        spin_Date.setEnabled(true);
+        spin_Result.setEnabled(true);
+        layoutProcessText.setVisibility(View.GONE); // yung umiikot
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            recyclerView.setRenderEffect(null);
+            layoutSortFilter.setRenderEffect(null);
+        }
+        // true to disable touch events
+        recyclerView.setOnTouchListener((view, event) -> false);
+        if (getActivity() instanceof MainActivity) {
+            ((MainActivity) getActivity()).setBottomNavigationEnabled(true);
+        }
+    }
+    private void processOfflineData(Context context, String ArgUrl) {
+        SmsForeground smsForeground = new SmsForeground();
         DBHelper dbHelper = new DBHelper(context);
-        Cursor cursor = dbHelper.getOfflineData();
-        if (cursor != null && cursor.moveToFirst()) {
-            int urlIndex = cursor.getColumnIndex("url");
-            int senderIndex = cursor.getColumnIndex("sender");
-            int idIndex = cursor.getColumnIndex("id");
+        Cursor cursor = dbHelper.getRecordByURL(ArgUrl);
+        disableButtons();
+        if (cursor != null) {
+            int notificationID = 300;
+            if (cursor.moveToFirst()) {
+                int urlIndex = cursor.getColumnIndex("url");
+                int senderIndex = cursor.getColumnIndex("sender");
+                int idIndex = cursor.getColumnIndex("id");
 
-            if (urlIndex != -1 && idIndex != -1) {
-                do {
-                    SmsListener smsListener = new SmsListener();
-                    String url = cursor.getString(urlIndex);
-                    String sender = cursor.getString(senderIndex);
-                    int id = cursor.getInt(idIndex);
+                if (urlIndex != -1 && idIndex != -1) {
+                    do {
+                        String url = cursor.getString(urlIndex);
+                        String sender = cursor.getString(senderIndex);
+                        int id = cursor.getInt(idIndex);
+                        notificationID = notificationID + id;
+                        ExecutorService executorService = Executors.newSingleThreadExecutor();
+                        int finalNotificationID = notificationID;
+                        executorService.execute(() -> {
+                            try {
+                                String apiUrl = SnapshotmachineAPI(url);
+                                String analysisId = processUrls(context, url);
 
-                    // Process the data asynchronously
-                    ExecutorService executorService = Executors.newSingleThreadExecutor();
-                    executorService.execute(() -> {
-                        try {
-                            String apiUrl = smsListener.SnapshotmachineAPI(url);
-                            String analysisId = smsListener.processUrls(context, url);
+                                if (analysisId != null) {
+                                    String analysisResultJSON = getAnalysis(analysisId);
 
-                            if (analysisId != null) {
-                                String analysisResultJSON = smsListener.getAnalysis(analysisId);
+                                    if (analysisResultJSON != null) {
+                                        InputStream in = new URL(apiUrl).openStream();
+                                        Bitmap bitmap = BitmapFactory.decodeStream(in);
+                                        byte[] image = getBitmapAsByteArray(bitmap);
 
-                                if (analysisResultJSON != null) {
-                                    InputStream in = new URL(apiUrl).openStream();
-                                    Bitmap bitmap = BitmapFactory.decodeStream(in);
-                                    byte[] image = smsListener.getBitmapAsByteArray(bitmap);
+                                        new Handler(Looper.getMainLooper()).post(() -> {
+                                            System.out.println("finalnotificationID: " + finalNotificationID);
+                                            String analysis = smsForeground.NotifyResult(context, url, sender, analysisResultJSON, finalNotificationID);
+                                            dbHelper.deleteRecordById(id);
 
-                                    // Post UI changes to the main thread
+                                            if(dbHelper.duplicateURL(url, sender)){
+                                                System.out.println("Message Fragment: Duplicate Entry - (" + sender + " : " + url + ") Updating Data. . .");
+                                                dbHelper.updateData(url, sender, apiUrl, analysis, image, analysisResultJSON);
+                                            } else {
+                                                System.out.println("Message Fragment: New Entry - (" + sender + " : " + url + ") Inserting Data. . .");
+                                                dbHelper.insertData(url, sender, apiUrl, analysis, image, analysisResultJSON);
+                                            }
+                                            enableButtons();
+                                            refreshData(); // Call refreshData when all URLs are processed
+                                        });
+                                    } else {
+                                        // Failure case
+                                        new Handler(Looper.getMainLooper()).post(() -> {
+                                            if (getActivity() instanceof MainActivity) {
+                                                ((MainActivity) getActivity()).setBottomNavigationEnabled(true);
+                                            }
+
+                                            // Enable after OfflineScan failed
+                                            enableButtons();
+                                            refreshData();
+                                            invalidURL(context, url);
+                                        });
+                                    }
+                                } else {
+                                    // Failure case
                                     new Handler(Looper.getMainLooper()).post(() -> {
-                                        String analysis = smsListener.NotifyResult(context, url, analysisResultJSON);
-                                        dbHelper.insertData(url, sender, apiUrl, analysis, image, analysisResultJSON);
+                                        if (getActivity() instanceof MainActivity) {
+                                            ((MainActivity) getActivity()).setBottomNavigationEnabled(true);
+                                        }
 
-                                        // After processing, delete the record by its ID
-                                        dbHelper.deleteRecordById(id);
-                                        btnScanOffline.setEnabled(true);
-                                        btnRemoveItem.setEnabled(true);
-                                        layoutOfflineProcess.setVisibility(View.GONE); // Hide layout if successful
+                                        // Enable after OfflineScan failed
+                                        enableButtons();
+                                        refreshData();
+                                        invalidURL(context, url);
                                     });
                                 }
-                            } else {
-                                // Post failure UI changes to the main thread
+                            } catch (IOException | NoSuchAlgorithmException | JSONException e) {
                                 new Handler(Looper.getMainLooper()).post(() -> {
-                                    btnScanOffline.setEnabled(true);
-                                    btnRemoveItem.setEnabled(true);
+                                    if (getActivity() instanceof MainActivity) {
+                                        ((MainActivity) getActivity()).setBottomNavigationEnabled(true);
+                                    }
+                                    // Enable after OfflineScan failed
+                                    invalidURL(context, url);
+                                    enableButtons();
+                                    refreshData();
                                 });
+                                Log.e("SmsListener", "Error: " + e.getMessage());
+                            } finally {
+                                executorService.shutdown();
                             }
-                        } catch (IOException | NoSuchAlgorithmException e) {
-                            // Post failure UI changes to the main thread
-                            new Handler(Looper.getMainLooper()).post(() -> {
-                                btnScanOffline.setEnabled(true);
-                                btnRemoveItem.setEnabled(true);
-                            });
-                            Log.e("SmsListener", "Error: " + e.getMessage());
-                        } catch (JSONException e) {
-                            new Handler(Looper.getMainLooper()).post(() -> {
-                                btnScanOffline.setEnabled(true);
-                                btnRemoveItem.setEnabled(true);
-                            });
-                            throw new RuntimeException(e);
-                        } finally {
-                            executorService.shutdown();
-                        }
-                    });
-                } while (cursor.moveToNext());
+                        });
+                    } while (cursor.moveToNext());
+                }
             }
-            cursor.close(); // Close the cursor when done
+            cursor.close();
         } else {
-            // Post UI changes to the main thread if cursor is null or empty
-            new Handler(Looper.getMainLooper()).post(() -> {
-                btnScanOffline.setEnabled(true);
-                btnRemoveItem.setEnabled(true);
-            });
-            Log.e("Error", "Cursor is null or empty");
+            enableButtons();
+            refreshData();
         }
     }
 
     private void refreshData() {
-//        FragmentManager fragmentManager = getActivity().getSupportFragmentManager();
-//        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-//
-//        MessageFragment messageFragment = new MessageFragment(); // or MessageFragment.newInstance() if you have arguments
-//
-//        fragmentTransaction.replace(R.id.frame_layout, messageFragment);
-//        // fragmentTransaction.addToBackStack(null); // Optional: add the transaction to the back stack so the user can navigate back
-//        fragmentTransaction.commit();
-
         // Check Offline Detected URL
         int count = DB.getOfflineDataCount();
         txtDetectedURL.setText("When Offline LinkGuard Detected "+ count + " URL");
@@ -469,6 +550,7 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
         } else {
             System.out.println("Internet Not Connected");
             layoutSpinnerButton.setVisibility(View.GONE);
+            layoutProcessText.setVisibility(View.GONE);
             internet.setVisibility(View.VISIBLE);
             txtInternet.setVisibility(View.VISIBLE);
         }
@@ -501,5 +583,133 @@ public class MessageFragment extends Fragment implements RecyclerViewInterface {
 
         return false;
     }
+
+    public String SnapshotmachineAPI(String url) throws UnsupportedEncodingException, NoSuchAlgorithmException {
+        // Call ScreenshotMachine API
+        String customerKey = ss_API_KEY;
+        String secretPhrase = ""; // leave secret phrase empty if not needed
+        ScreenshoMachine sm = new ScreenshoMachine(customerKey, secretPhrase);
+        Map<String, String> options = new HashMap<>();
+        options.put("url", url);
+        options.put("dimension", "1366x768");
+        options.put("device", "desktop");
+        options.put("format", "png");
+        options.put("cacheLimit", "0");
+        options.put("delay", "3000"); // 3 seconds
+        options.put("zoom", "100");
+
+        String apiUrl = sm.generateScreenshotApiUrl(options);
+        Log.v("Screenshot API URL", apiUrl);
+
+        return apiUrl;
+    }
+    public byte[] getBitmapAsByteArray(Bitmap bitmap) {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.PNG, 0, outputStream);
+        return outputStream.toByteArray();
+    }
+
+    public String getAnalysis(String analysisId) throws IOException {
+        if (analysisId == null || analysisId.isEmpty()) {
+            Log.e("SmsListener", "No Analysis ID provided.");
+            return null;
+        }
+
+        OkHttpClient client = NetworkClient.getPinnedHttpClient();
+
+        Request request = new Request.Builder()
+                .url("https://www.virustotal.com/api/v3/analyses/" + analysisId)
+                .get()
+                .addHeader("accept", "application/json")
+                .addHeader("x-apikey", API_KEY)
+                .build();
+
+        while (true) {
+            try (Response response = client.newCall(request).execute()) {
+                if (!response.isSuccessful()) {
+                    throw new IOException("Unexpected code " + response);
+                }
+
+                String responseBody = response.body().string();
+                Log.d("SmsListener", "getAnalysis Response: " + responseBody);
+                System.out.println("Get Analysis Response received: " + responseBody);
+
+                JSONObject jsonResponse = new JSONObject(responseBody);
+                JSONObject attributes = jsonResponse.getJSONObject("data").getJSONObject("attributes");
+
+                if (!attributes.getString("status").equals("queued")) {
+                    Log.d("SmsListener", "Analysis Results: " + jsonResponse.toString(2));
+                    return jsonResponse.toString();
+                } else {
+                    Log.d("SmsListener", "Analysis still queued.");
+                    Thread.sleep(1000);
+                }
+
+            } catch (IOException | JSONException | InterruptedException e) {
+                Log.e("SmsListener", "Error in getAnalysis: " + e.getMessage());
+                e.printStackTrace();
+                break;
+            }
+        }
+        return null;
+    }
+
+//    int retryCountNew = 5;
+    public String processUrls(Context context, String url) throws IOException, JSONException {
+        // POST request https://docs.virustotal.com/reference/scan-url
+
+        // Get the pinned OkHttpClient
+        OkHttpClient client = NetworkClient.getPinnedHttpClient();
+
+        String encodedUrl = URLEncoder.encode(url, "UTF-8");
+        MediaType mediaType = MediaType.parse("application/x-www-form-urlencoded");
+        RequestBody body = RequestBody.create(mediaType, "url=" + encodedUrl);
+
+//        for (int i = 0; i < retryCountNew; i++) {
+            try {
+                Request request = new Request.Builder()
+                        .url("https://www.virustotal.com/api/v3/urls")
+                        .post(body)
+                        .addHeader("accept", "application/json")
+                        .addHeader("x-apikey", API_KEY)
+                        .addHeader("content-type", "application/x-www-form-urlencoded")
+                        .build();
+
+                try (Response response = client.newCall(request).execute()) {
+                    if (!response.isSuccessful()) {
+                        throw new IOException("Unexpected code " + response);
+                    }
+
+                    String responseBody = response.body().string();
+                    JSONObject jsonResponse = new JSONObject(responseBody);
+                    return jsonResponse.getJSONObject("data").getString("id");
+                }
+            } catch (IOException | JSONException e) {
+//                Log.e("TestListener", "Attempt " + (i + 1) + " failed", e);
+//                if (i == retryCountNew - 1) {
+                    invalidURL(context, url);
+                    throw e;  // Final attempt failed, exception
+            }
+    }
+    private void invalidURL(Context context, String url) {
+        NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+
+        // Create NotificationChannel for Android Oreo and higher
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, "SMS Channel", NotificationManager.IMPORTANCE_DEFAULT);
+            notificationManager.createNotificationChannel(channel);
+        }
+
+        // Build the notification
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_notification)
+                .setContentTitle("Error in Scanning URL")
+                .setContentText("URL: " + url)
+                .setPriority(NotificationCompat.PRIORITY_HIGH);
+
+        // Show the notification
+        notificationManager.notify(6, builder.build());
+    }
+
 
 }
